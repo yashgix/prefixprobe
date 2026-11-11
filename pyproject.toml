@@ -1,0 +1,14 @@
+[project]
+name = "prefixprobe"
+version = "0.1.0"
+description = "Score a new model on Multi-step SWE from a budgeted, dependency-aware set of task prefixes"
+requires-python = ">=3.12"
+dependencies = ["numpy==2.5.4", "scipy==1.18.1"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
