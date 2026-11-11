@@ -1,4 +1,5 @@
-'''One-parameter item-response utilities for prefix probing.'''
+"""One-parameter item-response utilities for prefix probing."""
+
 from __future__ import annotations
 
 import numpy as np

@@ -1,4 +1,5 @@
-'''Tests for prefixprobe.model.'''
+"""Tests for prefixprobe.model."""
+
 from __future__ import annotations
 
 import unittest
@@ -21,8 +22,8 @@ def _benchmark(passes, runs, start) -> Benchmark:
     runs = np.asarray(runs, dtype=float)
     n_models, n_steps = passes.shape
     return Benchmark(
-        models=tuple(f'm{i}' for i in range(n_models)),
-        tasks=tuple(f't{i}' for i in range(len(start) - 1)),
+        models=tuple(f"m{i}" for i in range(n_models)),
+        tasks=tuple(f"t{i}" for i in range(len(start) - 1)),
         start=np.asarray(start, dtype=int),
         passes=passes,
         runs=runs,

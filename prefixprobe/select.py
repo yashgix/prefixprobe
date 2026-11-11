@@ -57,9 +57,7 @@ def uniform_plan(bench: Benchmark, cost: np.ndarray, budget: float) -> np.ndarra
 
 
 def cheapest_tasks_plan(bench: Benchmark, cost: np.ndarray, budget: float) -> np.ndarray:
-    totals = np.array(
-        [cost[int(bench.start[t]) : int(bench.start[t + 1])].sum() for t in range(len(bench.tasks))]
-    )
+    totals = np.array([cost[int(bench.start[t]) : int(bench.start[t + 1])].sum() for t in range(len(bench.tasks))])
     return fill_in_order(bench, cost, np.argsort(totals, kind="stable"), budget)
 
 

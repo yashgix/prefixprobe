@@ -14,7 +14,6 @@ from prefixprobe.select import (
     uniform_plan,
 )
 
-
 COST = np.array([1.0, 2.0, 1.0, 1.0, 1.0, 5.0])
 
 

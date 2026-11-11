@@ -130,7 +130,7 @@ class GridTest(unittest.TestCase):
 
         results = grid(BENCH, run_one)
         self.assertEqual(list(results), list(BUDGETS))
-        for budget_index, budget in enumerate(BUDGETS):
+        for budget in BUDGETS:
             self.assertEqual(list(results[budget]), list(STRATEGIES))
             for strategy in STRATEGIES:
                 self.assertEqual(tuple(results[budget][strategy]), MODELS)

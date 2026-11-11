@@ -72,12 +72,11 @@ def score(bench, fold, depths) -> dict:
     solve_rate_hat = _rate(solve_num, solve_den)
 
     if float(runs[other].sum()) == 0:
-        logloss = float('nan')
+        logloss = float("nan")
     else:
         q = np.clip(_sigmoid(ability + d[other]), 1e-15, 1.0 - 1e-15)
         logloss = float(
-            -np.sum(passes[other] * np.log(q) + (runs[other] - passes[other]) * np.log1p(-q))
-            / float(runs[other].sum())
+            -np.sum(passes[other] * np.log(q) + (runs[other] - passes[other]) * np.log1p(-q)) / float(runs[other].sum())
         )
 
     cost = np.asarray(fold.cost, dtype=float)
@@ -85,14 +84,14 @@ def score(bench, fold, depths) -> dict:
     spend = float(np.sum(cost[probe]) / total_cost) if total_cost != 0 else 0.0
 
     return {
-        'ability': ability,
-        'on_track_ability': on_track_ability,
-        'step_rate': step_rate,
-        'step_rate_hat': step_rate_hat,
-        'solve_rate': solve_rate,
-        'solve_rate_hat': solve_rate_hat,
-        'logloss': logloss,
-        'probed_steps': int(probe.sum()),
-        'probed_tasks': int(np.sum(np.asarray(depths) > 0)),
-        'spend': spend,
+        "ability": ability,
+        "on_track_ability": on_track_ability,
+        "step_rate": step_rate,
+        "step_rate_hat": step_rate_hat,
+        "solve_rate": solve_rate,
+        "solve_rate_hat": solve_rate_hat,
+        "logloss": logloss,
+        "probed_steps": int(probe.sum()),
+        "probed_tasks": int(np.sum(np.asarray(depths) > 0)),
+        "spend": spend,
     }

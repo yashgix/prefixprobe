@@ -53,9 +53,7 @@ def point_results(bench):
 
     def run_one(fold, strategy, budget, i, j):
         draws = RANDOM_DRAWS if strategy == "random" else 1
-        cells = [
-            errors(bench, fold, strategy, budget, np.random.default_rng([SEED, 1, i, j, k])) for k in range(draws)
-        ]
+        cells = [errors(bench, fold, strategy, budget, np.random.default_rng([SEED, 1, i, j, k])) for k in range(draws)]
         cell = {field: float(np.mean([c[field] for c in cells])) for field in FIELDS}
         cell["step_abs"] = float(np.mean([abs(c["step"]) for c in cells]))
         cell["solve_abs"] = float(np.mean([abs(c["solve"]) for c in cells]))
@@ -113,9 +111,7 @@ def _add_target(summary, point, reps, models, target):
     summary[f"{target}_err"] = [point[b][s][m][target] for b, s in CELLS for m in models]
     summary[f"{target}_abs"] = [point[b][s][m][absolute] for b, s in CELLS for m in models]
 
-    replicate_mae = [
-        [float(np.mean([abs(rep[b][s][m][target]) for m in models])) for b, s in CELLS] for rep in reps
-    ]
+    replicate_mae = [[float(np.mean([abs(rep[b][s][m][target]) for m in models])) for b, s in CELLS] for rep in reps]
     replicate_err = [[rep[b][s][m][target] for b, s in CELLS for m in models] for rep in reps]
     summary[f"{target}_mae_lo"], summary[f"{target}_mae_hi"] = _interval(replicate_mae)
     summary[f"{target}_err_lo"], summary[f"{target}_err_hi"] = _interval(replicate_err)

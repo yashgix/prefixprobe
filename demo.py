@@ -97,7 +97,8 @@ def summary(metrics):
 
 def _strategy_table(metrics, budget_index):
     lines = [
-        "| Strategy | Step-rate MAE | Solve-rate MAE | Log-loss (unprobed steps) | Spend | Steps probed | Tasks probed |",
+        "| Strategy | Step-rate MAE | Solve-rate MAE | Log-loss (unprobed steps) | Spend | Steps probed "
+        "| Tasks probed |",
         "| --- | --- | --- | --- | --- | --- | --- |",
     ]
     for strategy in STRATEGIES:
@@ -221,7 +222,7 @@ def main(argv=None):
     try:
         metrics = load_metrics(args.results)
     except OSError as error:
-        raise SystemExit(f"cannot read metrics from {args.results}: run experiment.py first ({error})")
+        raise SystemExit(f"cannot read metrics from {args.results}: run experiment.py first ({error})") from error
 
     print(summary(metrics))
 
