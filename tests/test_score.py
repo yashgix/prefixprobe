@@ -133,14 +133,15 @@ class ScoreTest(unittest.TestCase):
         self.assertAlmostEqual(out["solve_rate_hat"], expected)
 
     def test_estimation_ignores_unprobed_results(self):
-        depths = [1, 1]
+        depths = [1, 1]  # probes steps 0 and 3; steps 1, 2 and 4 stay unprobed
         before = score(self.bench, self.fold, depths)
-        passes = self.bench.passes.copy()
-        passes[0, [1, 2, 4]] = 0.0
-        after = score(replace(self.bench, passes=passes), self.fold, depths)
-        self.assertEqual(before["ability"], after["ability"])
-        self.assertEqual(before["on_track_ability"], after["on_track_ability"])
-        self.assertEqual(before["step_rate_hat"], after["step_rate_hat"])
+        for field, value in (("passes", 0.0), ("on_track", 0.0), ("reached", 4.0)):
+            with self.subTest(field=field):
+                counts = getattr(self.bench, field).copy()
+                counts[0, [1, 2, 4]] = value
+                after = score(replace(self.bench, **{field: counts}), self.fold, depths)
+                for name in ("ability", "on_track_ability", "step_rate_hat", "solve_rate_hat"):
+                    self.assertEqual(before[name], after[name])
 
 
 if __name__ == "__main__":

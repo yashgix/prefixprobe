@@ -73,12 +73,14 @@ class MakeFoldTest(unittest.TestCase):
 
     def test_held_out_results_do_not_enter_the_fold(self):
         before = make_fold(self.bench, "a")
-        passes = self.bench.passes.copy()
-        passes[0] = [0.0, 1.0, 0.0, 1.0, 0.0]
-        after = make_fold(replace(self.bench, passes=passes), "a")
-        for name in ("d", "e", "cost", "info"):
-            np.testing.assert_array_equal(getattr(before, name), getattr(after, name))
-        self.assertEqual(before.tau2, after.tau2)
+        for field in ("passes", "runs", "on_track", "reached", "seconds", "timed"):
+            with self.subTest(field=field):
+                counts = getattr(self.bench, field).copy()
+                counts[0] += 1.0
+                after = make_fold(replace(self.bench, **{field: counts}), "a")
+                for name in ("d", "e", "cost", "info"):
+                    np.testing.assert_array_equal(getattr(before, name), getattr(after, name))
+                self.assertEqual(before.tau2, after.tau2)
 
     def test_each_model_gets_its_own_fold(self):
         fold_a = make_fold(self.bench, "a")
