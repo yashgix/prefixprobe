@@ -1,28 +1,21 @@
-'''Reading and shaping Multi-step SWE result modules.'''
 from __future__ import annotations
 
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 
-from . import DATA_DIR
+DATA_DIR = Path(__file__).resolve().parent.parent / 'data'
 
 
-def read_module(path: str | Path) -> Any:
-    '''Return the JSON object exported by one generated JavaScript module.'''
+def read_module(path):
     text = Path(path).read_text(encoding='utf-8')
-    start = text.index('{')
-    obj, _ = json.JSONDecoder().raw_decode(text, start)
-    return obj
+    return json.JSONDecoder().raw_decode(text, text.index('{'))[0]
 
 
 @dataclass(frozen=True)
 class Benchmark:
-    '''Flat step-level benchmark counts, one column per step.'''
-
     models: tuple[str, ...]
     tasks: tuple[str, ...]
     start: np.ndarray
@@ -35,120 +28,103 @@ class Benchmark:
 
     @property
     def task_of(self) -> np.ndarray:
-        return np.repeat(np.arange(len(self.tasks), dtype=int), np.diff(self.start))
+        lengths = np.diff(self.start)
+        return np.repeat(np.arange(len(self.tasks), dtype=int), lengths)
 
     @property
     def position(self) -> np.ndarray:
-        return np.arange(int(self.start[-1]), dtype=int) - self.start[self.task_of]
+        lengths = np.diff(self.start)
+        starts = np.repeat(self.start[:-1], lengths)
+        return np.arange(self.start[-1], dtype=int) - starts
 
     def within_task_cumsum(self, x: np.ndarray) -> np.ndarray:
         x = np.asarray(x)
-        cum = np.cumsum(x)
-        out = cum.copy()
-        for t in range(len(self.tasks)):
-            s = int(self.start[t])
-            e = int(self.start[t + 1])
-            if s:
-                out[s:e] = cum[s:e] - cum[s - 1]
+        out = np.empty_like(x)
+        for a, b in zip(self.start[:-1], self.start[1:]):
+            out[a:b] = np.cumsum(x[a:b])
         return out
 
     def resample(self, task_idx) -> Benchmark:
-        idx = [int(t) for t in task_idx]
-        selected = []
-        lengths = []
-        for t in idx:
-            s = int(self.start[t])
-            e = int(self.start[t + 1])
-            selected.append(np.arange(s, e, dtype=int))
-            lengths.append(e - s)
-        if selected:
-            cols = np.concatenate(selected)
-            start = np.concatenate((np.array([0], dtype=int), np.cumsum(lengths, dtype=int)))
+        idx = np.asarray(task_idx, dtype=int)
+        if idx.size:
+            lengths = self.start[idx + 1] - self.start[idx]
+            columns = np.concatenate([np.arange(self.start[t], self.start[t + 1], dtype=int) for t in idx])
         else:
-            cols = np.empty(0, dtype=int)
-            start = np.array([0], dtype=int)
+            lengths = np.zeros(0, dtype=int)
+            columns = np.zeros(0, dtype=int)
+        start = np.concatenate(([0], np.cumsum(lengths))).astype(int)
+
+        def take(a: np.ndarray) -> np.ndarray:
+            return a[:, columns].copy()
+
         return Benchmark(
             models=self.models,
             tasks=tuple(self.tasks[t] for t in idx),
             start=start,
-            passes=self.passes[:, cols],
-            runs=self.runs[:, cols],
-            on_track=self.on_track[:, cols],
-            reached=self.reached[:, cols],
-            seconds=self.seconds[:, cols],
-            timed=self.timed[:, cols],
+            passes=take(self.passes),
+            runs=take(self.runs),
+            on_track=take(self.on_track),
+            reached=take(self.reached),
+            seconds=take(self.seconds),
+            timed=take(self.timed),
         )
 
 
-def load(data_dir: str | Path = DATA_DIR) -> Benchmark:
-    '''Load the benchmark counts and recorded agent seconds from a data directory.'''
+def load(data_dir=DATA_DIR) -> Benchmark:
     data_dir = Path(data_dir)
     data = read_module(data_dir / 'benchmark.js')['data']
-    models = tuple(model['id'] for model in data['models'])
-    tasks_data = data['tasks']
-    lengths = [len(task['steps']) for task in tasks_data]
-    start = np.concatenate((np.array([0], dtype=int), np.cumsum(lengths, dtype=int)))
-    model_index = {model: i for i, model in enumerate(models)}
-    n_models = len(models)
-    n_steps = int(start[-1])
-    passes = np.zeros((n_models, n_steps), dtype=float)
-    runs = np.zeros((n_models, n_steps), dtype=float)
-    on_track = np.zeros((n_models, n_steps), dtype=float)
-    reached = np.zeros((n_models, n_steps), dtype=float)
-    seconds = np.zeros((n_models, n_steps), dtype=float)
-    timed = np.zeros((n_models, n_steps), dtype=float)
+    models = tuple(m['id'] for m in data['models'])
+    task_entries = data['tasks']
+    tasks = tuple(t['id'] for t in task_entries)
+    lengths = np.array([len(t['steps']) for t in task_entries], dtype=int)
+    start = np.concatenate(([0], np.cumsum(lengths))).astype(int)
 
-    for t_idx, task in enumerate(tasks_data):
-        s = int(start[t_idx])
-        e = int(start[t_idx + 1])
-        for model, run_list in task.get('runs', {}).items():
-            i = model_index.get(model)
-            if i is None:
-                continue
-            for run in run_list:
-                clean = True
-                for k, score in enumerate(run.get('scores', [])):
-                    j = s + k
-                    if j >= e:
-                        break
-                    runs[i, j] += 1.0
-                    if score:
-                        passes[i, j] += 1.0
-                    if clean:
-                        reached[i, j] += 1.0
-                        if score:
-                            on_track[i, j] += 1.0
-                    clean = clean and bool(score)
+    m_count = len(models)
+    step_count = int(start[-1])
+    passes = np.zeros((m_count, step_count), dtype=float)
+    runs = np.zeros((m_count, step_count), dtype=float)
+    on_track = np.zeros((m_count, step_count), dtype=float)
+    reached = np.zeros((m_count, step_count), dtype=float)
+    seconds = np.zeros((m_count, step_count), dtype=float)
+    timed = np.zeros((m_count, step_count), dtype=float)
 
+    for task_index, task in enumerate(task_entries):
+        first, last = int(start[task_index]), int(start[task_index + 1])
         task_id = task['id']
-        trace_path = data_dir / 'tasks' / f'{task_id}.js'
-        if not trace_path.exists():
-            continue
-        traces = read_module(trace_path).get('traces', {})
-        for model, run_map in traces.items():
-            i = model_index.get(model)
-            if i is None:
-                continue
-            for entries in run_map.values():
-                for k, entry in enumerate(entries):
-                    j = s + k
-                    if j >= e:
-                        break
-                    if not isinstance(entry, dict):
+        traces = read_module(data_dir / 'tasks' / f'{task_id}.js').get('traces', {})
+        for model_index, model in enumerate(models):
+            run_records = task.get('runs', {}).get(model, [])
+            model_traces = traces.get(model, {})
+            for offset in range(last - first):
+                col = first + offset
+                n_runs = 0
+                n_passed = 0
+                n_reached = 0
+                n_on_track = 0
+                for record in run_records:
+                    scores = record.get('scores') or []
+                    if offset >= len(scores):
                         continue
-                    sec = entry.get('seconds')
-                    if sec is not None:
-                        seconds[i, j] += float(sec)
-                        timed[i, j] += 1.0
+                    n_runs += 1
+                    before = all(scores[i] == 1 for i in range(offset))
+                    current = scores[offset] == 1
+                    if before:
+                        n_reached += 1
+                    if before and current:
+                        n_on_track += 1
+                    if current:
+                        n_passed += 1
+                runs[model_index, col] = n_runs
+                passes[model_index, col] = n_passed
+                reached[model_index, col] = n_reached
+                on_track[model_index, col] = n_on_track
 
-    return Benchmark(
-        models=models,
-        tasks=tuple(task['id'] for task in tasks_data),
-        start=start,
-        passes=passes,
-        runs=runs,
-        on_track=on_track,
-        reached=reached,
-        seconds=seconds,
-        timed=timed,
-    )
+                for record in run_records:
+                    entries = model_traces.get(record.get('id'), [])
+                    if offset < len(entries):
+                        value = entries[offset].get('seconds')
+                        if value is not None:
+                            seconds[model_index, col] += float(value)
+                            timed[model_index, col] += 1.0
+
+    return Benchmark(models, tasks, start, passes, runs, on_track, reached, seconds, timed)

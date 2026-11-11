@@ -1,95 +1,98 @@
-"""Turn a probe plan into estimated and true step and solve rates."""
-
 from __future__ import annotations
 
 import numpy as np
 
-from .data import Benchmark
-from .fold import Fold
 from .model import fit_ability
 
-_TINY = 1e-12
+
+def _sigmoid(x):
+    x = np.asarray(x, dtype=float)
+    return 0.5 * (1.0 + np.tanh(0.5 * x))
 
 
-def _sigmoid(x) -> np.ndarray:
-    return 1.0 / (1.0 + np.exp(-np.asarray(x, dtype=float)))
+def _probe_mask(bench, depths):
+    depths = np.asarray(depths, dtype=int)
+    if len(bench.task_of) == 0:
+        return np.zeros(0, dtype=bool)
+    return bench.position < depths[bench.task_of]
 
 
-def _percent(numerator: float, denominator: float) -> float:
-    return 100.0 * numerator / denominator if denominator else float("nan")
+def _rate(numerator, denominator):
+    if denominator == 0:
+        return 0.0
+    return float(100.0 * numerator / denominator)
 
 
-def _probe_mask(bench: Benchmark, depths) -> np.ndarray:
-    depth_of_step = np.asarray(depths, dtype=int)[bench.task_of]
-    return bench.position < depth_of_step
-
-
-def _solve_rate(bench: Benchmark, model_idx: int) -> float:
-    """Runs on track at each task's last step over the runs at each task's first."""
-    on_track = bench.on_track[model_idx]
-    clean = sum(float(on_track[int(bench.start[t + 1]) - 1]) for t in range(len(bench.tasks)))
-    return _percent(clean, float(bench.runs[model_idx].sum()))
-
-
-def _solve_rate_hat(bench, fold: Fold, depths, model_idx: int, on_track_ability: float) -> float:
-    on_track = bench.on_track[model_idx]
-    runs = bench.runs[model_idx]
-    total = 0.0
-    denominators = 0.0
-    for t in range(len(bench.tasks)):
-        first = int(bench.start[t])
-        last = int(bench.start[t + 1]) - 1
-        depth = int(min(max(int(depths[t]), 0), last - first + 1))
-        denominators += float(runs[first])
-        if depth == 0:
-            clean = float(runs[first])
-        else:
-            clean = float(on_track[first + depth - 1])
-        future = 1.0
-        for j in range(first + depth, last + 1):
-            future *= float(_sigmoid(on_track_ability + fold.e[j]))
-        total += clean * future
-    return _percent(total, denominators)
-
-
-def score(bench: Benchmark, fold: Fold, depths) -> dict:
-    """Score a probe plan for ``fold.model``; its results outside the probe are used only as truth."""
-    model_idx = bench.models.index(fold.model)
-    passes = bench.passes[model_idx]
-    runs = bench.runs[model_idx]
-    on_track = bench.on_track[model_idx]
-    reached = bench.reached[model_idx]
+def score(bench, fold, depths) -> dict:
+    model_index = bench.models.index(fold.model)
+    passes = bench.passes[model_index]
+    runs = bench.runs[model_index]
+    on_track = bench.on_track[model_index]
+    reached = bench.reached[model_index]
 
     probe = _probe_mask(bench, depths)
     other = ~probe
+    d = np.asarray(fold.d, dtype=float)
+    e = np.asarray(fold.e, dtype=float)
+
+    ability = float(fit_ability(d[probe], passes[probe], runs[probe]))
+    on_track_ability = float(fit_ability(e[probe], on_track[probe], reached[probe]))
+
     total_runs = float(runs.sum())
+    step_rate = _rate(float(passes.sum()), total_runs)
+    step_rate_hat = _rate(
+        float(passes[probe].sum()) + float(np.sum(runs[other] * _sigmoid(ability + d[other]))),
+        total_runs,
+    )
 
-    ability = float(fit_ability(fold.d[probe], passes[probe], runs[probe]))
-    on_track_ability = float(fit_ability(fold.e[probe], on_track[probe], reached[probe]))
+    task_starts = bench.start[:-1]
+    task_lasts = bench.start[1:] - 1
+    first_runs = float(runs[task_starts].sum())
+    solve_rate = _rate(float(on_track[task_lasts].sum()), first_runs)
 
-    predicted = runs[other] * _sigmoid(ability + fold.d[other])
-    step_rate_hat = _percent(float(passes[probe].sum()) + float(predicted.sum()), total_runs)
+    solve_num = 0.0
+    solve_den = 0.0
+    for task_index in range(len(bench.tasks)):
+        first = int(bench.start[task_index])
+        last = int(bench.start[task_index + 1])
+        length = last - first
+        if length == 0:
+            continue
+        solve_den += float(runs[first])
+        depth = int(depths[task_index]) if task_index < len(depths) else 0
+        depth = max(0, min(depth, length))
+        if depth == 0:
+            clean = float(runs[first])
+            after = np.arange(first, last, dtype=int)
+        else:
+            clean = float(on_track[first + depth - 1])
+            after = np.arange(first + depth, last, dtype=int)
+        factor = float(np.prod(_sigmoid(on_track_ability + e[after]))) if after.size else 1.0
+        solve_num += clean * factor
+    solve_rate_hat = _rate(solve_num, solve_den)
 
-    if other.any() and float(runs[other].sum()) > 0:
-        p = np.clip(_sigmoid(ability + fold.d[other]), _TINY, 1.0 - _TINY)
-        n = runs[other]
-        loss = -(passes[other] * np.log(p) + (n - passes[other]) * np.log1p(-p))
-        logloss = float(loss.sum() / float(n.sum()))
+    if float(runs[other].sum()) == 0:
+        logloss = float('nan')
     else:
-        logloss = float("nan")
+        q = np.clip(_sigmoid(ability + d[other]), 1e-15, 1.0 - 1e-15)
+        logloss = float(
+            -np.sum(passes[other] * np.log(q) + (runs[other] - passes[other]) * np.log1p(-q))
+            / float(runs[other].sum())
+        )
 
-    cost_total = float(fold.cost.sum())
-    spend = float(fold.cost[probe].sum()) / cost_total if cost_total else float("nan")
+    cost = np.asarray(fold.cost, dtype=float)
+    total_cost = float(np.sum(cost))
+    spend = float(np.sum(cost[probe]) / total_cost) if total_cost != 0 else 0.0
 
     return {
-        "ability": ability,
-        "on_track_ability": on_track_ability,
-        "step_rate": _percent(float(passes.sum()), total_runs),
-        "step_rate_hat": step_rate_hat,
-        "solve_rate": _solve_rate(bench, model_idx),
-        "solve_rate_hat": _solve_rate_hat(bench, fold, depths, model_idx, on_track_ability),
-        "logloss": logloss,
-        "probed_steps": int(probe.sum()),
-        "probed_tasks": int((np.asarray(depths, dtype=int) > 0).sum()),
-        "spend": spend,
+        'ability': ability,
+        'on_track_ability': on_track_ability,
+        'step_rate': step_rate,
+        'step_rate_hat': step_rate_hat,
+        'solve_rate': solve_rate,
+        'solve_rate_hat': solve_rate_hat,
+        'logloss': logloss,
+        'probed_steps': int(probe.sum()),
+        'probed_tasks': int(np.sum(np.asarray(depths) > 0)),
+        'spend': spend,
     }

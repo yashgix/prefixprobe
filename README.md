@@ -36,9 +36,9 @@ python tools/fetch_data.py --verify  # check against data/MANIFEST.json (also: m
 ```
 
 Each module is a JavaScript file whose text carries one JSON object; it is read as text with `json` and never
-imported or executed. The published results cover 69 tasks, 574 steps and nine models with four runs per task, and
-runs continue after a failed step — so a run's first k scores are exactly what a probe of that task's first k steps
-would have produced.
+imported or executed. The published results cover 69 tasks, 574 steps and nine models with four runs per task (one
+model has three runs on one task), and runs continue after a failed step — so a run's first k scores are exactly what
+a probe of that task's first k steps would have produced.
 
 **Terms.** The site states no license for this data. It is used for analysis only and is never redistributed: a
 public copy of this repository would carry only code, `tools/fetch_data.py`, `data/MANIFEST.json` and derived
