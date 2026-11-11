@@ -74,6 +74,12 @@ def greedy_plan(bench: Benchmark, fold: Fold, budget: float) -> np.ndarray:
     info = np.asarray(fold.info, dtype=float)
     tau2 = float(fold.tau2)
     left = float(budget)
+    # Prefix sums and their gains never change, so they are computed once per task and read as Python floats.
+    cost_prefixes, gain_prefixes = [], []
+    for task in range(n_tasks):
+        lo, hi = int(bench.start[task]), int(bench.start[task + 1])
+        cost_prefixes.append(np.cumsum(cost[lo:hi]).tolist())
+        gain_prefixes.append([_g(x, tau2) for x in np.cumsum(info[lo:hi]).tolist()])
 
     while True:
         best_ratio = -np.inf
@@ -87,20 +93,16 @@ def greedy_plan(bench: Benchmark, fold: Fold, budget: float) -> np.ndarray:
             if old >= length:
                 continue
 
-            lo = int(bench.start[task])
-            hi = int(bench.start[task + 1])
-            cost_prefix = np.cumsum(cost[lo:hi])
-            info_prefix = np.cumsum(info[lo:hi])
-            old_info = float(info_prefix[old - 1]) if old else 0.0
-            old_gain = _g(old_info, tau2)
-            old_cost = float(cost_prefix[old - 1]) if old else 0.0
+            cost_prefix = cost_prefixes[task]
+            gain_prefix = gain_prefixes[task]
+            old_gain = gain_prefix[old - 1] if old else _g(0.0, tau2)
+            old_cost = cost_prefix[old - 1] if old else 0.0
 
             for depth in range(old + 1, length + 1):
-                add_cost = float(cost_prefix[depth - 1] - old_cost)
+                add_cost = cost_prefix[depth - 1] - old_cost
                 if add_cost > left:
                     break
-                new_info = float(info_prefix[depth - 1])
-                gain = _g(new_info, tau2) - old_gain
+                gain = gain_prefix[depth - 1] - old_gain
                 if gain <= 0:
                     continue
                 ratio = gain / add_cost if add_cost > 0 else np.inf
