@@ -7,17 +7,21 @@ close the resulting estimate of step rate and solve rate gets to a full run.
 
 ## 0:00 — The question
 
-Multi-step SWE chains 5–15 dependent requests on one codebase. To place a new model on that leaderboard you run all
-69 tasks, four times each — and the published results carry a per-model dollar cost, so this is not a cheap thing to
-repeat every time a model ships. The question: with a small fraction of that budget, where should you spend it, and
-how wrong is the answer?
+Each Multi-step SWE task chains 5–15 dependent engineering requests on one codebase
+([README](https://raw.githubusercontent.com/Klavis-AI/Multi-step-SWE/main/README.md)), and there are 69 tasks
+([blog](https://www.klavis.ai/blog/multi-step-swe)). In the published results (`data/benchmark.js`) each of the nine
+models has four runs of every task, except one task where Qwen has three, and the file carries a dollar cost per
+model (`costData`). My inference, not a rule Klavis states: a new model placed the same way needs a comparable set of
+runs, which is not cheap to repeat every time a model ships. The question: with a small fraction of that budget,
+where should you spend it, and how wrong is the answer?
 
 ## 0:30 — Why the prefix is the unit
 
 Step k of a task cannot run without steps 1..k-1. So the cost of a step is never the step: it is the prefix behind
 it. That single fact rules out the usual "pick a random subset of items" answer — items are not independent, and they
-are not equally priced. Probing the first k steps of a task is also exactly what the benchmark does anyway: runs
-continue after a failure, so a probe of a prefix is a truncation of a real run, not a simulation of one.
+are not equally priced. Probing the first k steps of a task also matches the published runs: they continue after a
+failed step (every step of every run is scored), so a probe of a prefix is a truncation of a real run, not a
+simulation of one.
 
 ## 1:00 — Two difficulty scales
 
