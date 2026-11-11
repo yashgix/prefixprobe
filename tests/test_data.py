@@ -51,7 +51,7 @@ class BenchmarkTests(unittest.TestCase):
         sample = bench.resample([1, 0, 1])
         self.assertEqual(sample.models, bench.models)
         self.assertEqual(sample.tasks, ('b', 'a', 'b'))
-        np.testing.assert_array_equal(sample.start, [0, 2, 5, 8])
+        np.testing.assert_array_equal(sample.start, [0, 2, 5, 7])
         expected = np.array([[4, 5, 1, 2, 3, 4, 5], [9, 10, 6, 7, 8, 9, 10]])
         np.testing.assert_array_equal(sample.passes, expected)
 

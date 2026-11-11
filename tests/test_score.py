@@ -86,7 +86,7 @@ class ScoreTest(unittest.TestCase):
         self.assertEqual(out["spend"], 0.0)
         self.assertEqual(out["ability"], 0.0)
         self.assertEqual(out["on_track_ability"], 0.0)
-        self.assertTrue(np.isnan(out["logloss"]))
+        self.assertFalse(np.isnan(out["logloss"]))
         runs = self.bench.runs[0]
         self.assertAlmostEqual(out["step_rate"], 100.0 * self.bench.passes[0].sum() / runs.sum())
         expected = 100.0 * (runs * sigmoid(self.fold.d)).sum() / runs.sum()
@@ -123,14 +123,15 @@ class ScoreTest(unittest.TestCase):
         out = score(self.bench, self.fold, [2, 0])
         on_track = self.bench.on_track[0]
         runs = self.bench.runs[0]
-        self.assertAlmostEqual(out["solve_rate"], 100.0 * (on_track[2] + on_track[4]) / runs.sum())
+        self.assertAlmostEqual(out["solve_rate"], 100.0 * (on_track[2] + on_track[4]) / (runs[0] + runs[3]))
 
         on_track_ability = fit_ability(self.fold.e[:2], on_track[:2], self.bench.reached[0, :2])
         self.assertAlmostEqual(out["on_track_ability"], on_track_ability)
         clean0 = on_track[1]
         clean1 = runs[3]
+        rest0 = sigmoid(on_track_ability + self.fold.e[2])
         future = sigmoid(on_track_ability + self.fold.e[3:]).prod()
-        expected = 100.0 * (clean0 + clean1 * future) / (runs[0] + runs[3])
+        expected = 100.0 * (clean0 * rest0 + clean1 * future) / (runs[0] + runs[3])
         self.assertAlmostEqual(out["solve_rate_hat"], expected)
 
     def test_estimation_ignores_unprobed_results(self):

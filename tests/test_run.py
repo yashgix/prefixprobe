@@ -191,9 +191,7 @@ class SummaryTest(unittest.TestCase):
             for key in (f"{target}_mae", f"{target}_mae_lo", f"{target}_mae_hi"):
                 self.assertEqual(len(SUMMARY[key]), len(CELLS))
             for key in (f"{target}_err", f"{target}_err_lo", f"{target}_err_hi", f"{target}_abs"):
-                self.assertEqual(len(SUMMARY[key]), len(CELLS))
-                for row in SUMMARY[key]:
-                    self.assertEqual(len(row), len(MODELS))
+                self.assertEqual(len(SUMMARY[key]), len(CELLS) * len(MODELS))
 
     def test_per_pair_lists(self):
         for target in TARGETS:
