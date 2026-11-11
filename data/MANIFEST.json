@@ -1,0 +1,287 @@
+{
+ "source": "https://multistepswe.com/generated/",
+ "fetched": "2026-11-10",
+ "note": "Klavis AI Multi-step SWE public results. No license is stated: analysis only, never redistributed.",
+ "files": {
+  "benchmark.js": {
+   "sha256": "62be72ea85ab67b1ab0da2f7be2176b3f533b41909a098ccde1ac16b9fc0d820",
+   "bytes": 238571
+  },
+  "tasks/21-py-packaging-to-lockfiles.js": {
+   "sha256": "7ab1c079a44d16d4c1dcc80dc1b5f78ee7e36bd3a39dbc0319513e3a6a5d3707",
+   "bytes": 62192
+  },
+  "tasks/arquillian-java6-to-25.js": {
+   "sha256": "9b44a31d15d226e44e5080aef4a81c98124978b0c150621c77d40b213951c791",
+   "bytes": 263139
+  },
+  "tasks/arrow-parquet-column-simd.js": {
+   "sha256": "75cd9fbb130fe3a1794f96e5fa37b045da4bc9f2df9aa308976e76101ee6da4f",
+   "bytes": 45994
+  },
+  "tasks/avisynthplus-video-filters-simd.js": {
+   "sha256": "d1e56e079d98bd2313db9e56e469f90e2b77f3a94047b977117957a60108613f",
+   "bytes": 49249
+  },
+  "tasks/bitmagic-block-kernels.js": {
+   "sha256": "afd412096a45b2d4f4c721e4cdbfab877640bfdd1e98716e5f6d64efca527cfd",
+   "bytes": 44529
+  },
+  "tasks/boringssl-crypto-asm.js": {
+   "sha256": "3f3df013eb787bc9d5f7f1d1871f658bdaba45115dff01c0bcba4e97822a6d0b",
+   "bytes": 43597
+  },
+  "tasks/certificate-transparency-multiversion.js": {
+   "sha256": "a481d23d1d4b1f14fbd7a44a24410a9c1f266f303eb6765e2fd977d820fd26ca",
+   "bytes": 134070
+  },
+  "tasks/cityvoice-rails3-to-8.js": {
+   "sha256": "c3937fdb6ed1a1df0b3e78f1d199f28d3e0f4a964f0146c1ce8037bd2467cb4c",
+   "bytes": 301511
+  },
+  "tasks/css-layout-engine-chain.js": {
+   "sha256": "8d1e244420e8c063c45fe26685ca716099b5c1fa9d951e5f7c01fb30d2e07aee",
+   "bytes": 31064
+  },
+  "tasks/dwarf-debugger-version-chain.js": {
+   "sha256": "a7bbc92b62d33037b6f444001e769ded4efd1fa788cc594d948f0284892c6b4c",
+   "bytes": 31997
+  },
+  "tasks/elf-linker-multiversion.js": {
+   "sha256": "f034d2a39950eca8a75abb28fb963cb5ad2436b52910cc18c29169a1bb66a598",
+   "bytes": 46035
+  },
+  "tasks/email-smtp-imap-revision-chain.js": {
+   "sha256": "c33a0121a29d516f0f84b127914d374eec21854915243947f1440ce77c4d5873",
+   "bytes": 94239
+  },
+  "tasks/evm-fork-chain.js": {
+   "sha256": "f4aa4e43f257a9d61fe316b1b379b47e7ef847417120b079c08025ed59c4a025",
+   "bytes": 199016
+  },
+  "tasks/evm-state-transition-multiversion.js": {
+   "sha256": "b7396cd5231672f87b81b6f3f1e2f8cba3fa7a9bde6c78be4af75e83356c6307",
+   "bytes": 113779
+  },
+  "tasks/ffmpeg-swscale-pipeline-asm.js": {
+   "sha256": "da6d3cd4d42584fe832eb10b78cc3f3c205ec73ad59129b14477044d5960fe9f",
+   "bytes": 33434
+  },
+  "tasks/fhir-server-version-chain.js": {
+   "sha256": "9f7827530efb483e85730cee5471c75a8ba38c8809f709130da4d998fc32c40a",
+   "bytes": 79156
+  },
+  "tasks/git-format-protocol-chain.js": {
+   "sha256": "66416d2781ad03f307cf695fe875c7eee1a3d81196dbbb17d7c03f11d534ae18",
+   "bytes": 38052
+  },
+  "tasks/go-compiler-version-chain.js": {
+   "sha256": "246709ecc32392d8c668065c4275964340d8ab47b6a6dd164daa8a650bbdf957",
+   "bytes": 45606
+  },
+  "tasks/h264-decoder-profile-chain.js": {
+   "sha256": "719d1cd3676fdb440f5930df364a9d335b270e0f1a88988b9b862753866418ba",
+   "bytes": 27417
+  },
+  "tasks/hedis-ipv4-to-ipv6.js": {
+   "sha256": "c32b708d030d456087b433901d137296b2276dbfc6eddabb06f6b564b9172cc6",
+   "bytes": 73568
+  },
+  "tasks/iceberg-table-format-multiversion.js": {
+   "sha256": "268b46ce7b0e3f29950637abe4151785c5944dfb9c5ac171b779e393d735963a",
+   "bytes": 30614
+  },
+  "tasks/icechunk-array-store-multiversion.js": {
+   "sha256": "24d4401c004ee2e338b5316c4f1ef2018109355b6c48338a33040261426fb9cb",
+   "bytes": 83964
+  },
+  "tasks/isal-crypto-multibuffer-hash.js": {
+   "sha256": "d5aa69f4226ad00dda1efeed0b7e821af8957b452d76629f5aa95b1964a34be4",
+   "bytes": 50610
+  },
+  "tasks/ise-cpp98-to-cpp26.js": {
+   "sha256": "0294a79c2079110eac144ece1334d9fb46a422af91c930b7e653a92028ff53a0",
+   "bytes": 322051
+  },
+  "tasks/javaee6-to-jakarta11.js": {
+   "sha256": "bd83c60f54fc327e03ea39151c8c14732b6d0d0b836c9166b62f527ee2e4f737",
+   "bytes": 242515
+  },
+  "tasks/jvm-classfile-version-chain.js": {
+   "sha256": "0961b048aa2c6b15f03cb3e8e9dbdba5a19ff5f83cbaf359285be3968b4ede48",
+   "bytes": 71744
+  },
+  "tasks/kubernetes-control-plane-chain.js": {
+   "sha256": "b6d26264a9460107bb1ceb0d8f1185525238623a912a512e0f9974a25fa72f32",
+   "bytes": 71306
+  },
+  "tasks/lammps-intel-kernels.js": {
+   "sha256": "6c6005467f7e74482b763d0b327e4efa957aa0491927a3bb1f5a1da6acfc72bb",
+   "bytes": 35848
+  },
+  "tasks/libstorage-gopath-to-go1.25.js": {
+   "sha256": "b3626b028b360390529533fffbfe2dd710c4b1fd457e039983f40381f5e77ca3",
+   "bytes": 128278
+  },
+  "tasks/lua-vm-version-chain.js": {
+   "sha256": "b18d30dee6e747721e8c25cc07a428fa41bb9f4de630c472992f2d06d195738c",
+   "bytes": 67373
+  },
+  "tasks/matrix-homeserver-spec-chain.js": {
+   "sha256": "4c029afb84e7e4433f0db86588c2edafdcfe74085c47dac2f0b6af8127416f04",
+   "bytes": 74724
+  },
+  "tasks/mldsa-native-avx2-asm.js": {
+   "sha256": "9c6742879a608edaba1948b3442dbb5ce750437e0fd4ac8c6ce0caa24d280075",
+   "bytes": 44755
+  },
+  "tasks/mlkem-native-avx2-arith.js": {
+   "sha256": "056827ce4b06b3147241ec158008c317294bdfc2a52c2f695609dd2a602ea92f",
+   "bytes": 66678
+  },
+  "tasks/mmtf-spark-2.4-to-4.0.js": {
+   "sha256": "0d02f15019164be4cf8d554d16e407513b17f469a044e9501209cdd64d1bff87",
+   "bytes": 67835
+  },
+  "tasks/mysql5-to-postgres17.js": {
+   "sha256": "6076cb4e5406a574fee8baf3a5ee2d766811c7044880cdf5d90c5517d73810fb",
+   "bytes": 81982
+  },
+  "tasks/onion-routing-client-multiversion.js": {
+   "sha256": "3b4f5796a697f6fc91c3b751aaaf160c186f5a58a12d58b1e59e846ce27adaae",
+   "bytes": 64236
+  },
+  "tasks/ooxml-spreadsheet-engine-multiversion.js": {
+   "sha256": "2c0ad1402ef193f38bbfdf19e37b55101518c456beecca12017128b29d527dcc",
+   "bytes": 112413
+  },
+  "tasks/openjph-htj2k-passes.js": {
+   "sha256": "a4b02610695e5fa5f0e1335ba02913cc5f186c7642bd3a989bad0e4f4fe21536",
+   "bytes": 49653
+  },
+  "tasks/openscenario-engine-multiversion.js": {
+   "sha256": "8e431850117b84cc52d8524f84213b660c6ea61356988c5a37a67ee14011e031",
+   "bytes": 276739
+  },
+  "tasks/openssl-1.0.2-to-3.5-tpm2-simulator.js": {
+   "sha256": "34de0289b1b0056d464eb86d00d0ee7eac9d3bff24224d1d711f31dbe1ac8630",
+   "bytes": 186125
+  },
+  "tasks/opentype-engine-version-chain.js": {
+   "sha256": "ff726d7d0f624b36d272afc368292755ec683c26ef4bb4fdff1d78b5dc1ddd80",
+   "bytes": 49064
+  },
+  "tasks/pandas-numpy-modernization.js": {
+   "sha256": "157509fe428bdc8ffc74e9eaae746273f88c0f5d61bfaeffe931a8fb430a866a",
+   "bytes": 146917
+  },
+  "tasks/parasail-align-simd.js": {
+   "sha256": "847264190287609fd5d346f871f855cbdaeb01806e9027236a0257f0a229cd9d",
+   "bytes": 66581
+  },
+  "tasks/pcre2-regex-engine-multiversion.js": {
+   "sha256": "b3b2c3a2aa8c9f8d3e14125b08d9fb6b451e7fa39c23d789a9cada3c7b0b5a5c",
+   "bytes": 221385
+  },
+  "tasks/pdal-point-cloud-multiversion.js": {
+   "sha256": "e595e0814cf1447f2bdad17b1e73f80e0c980981b82310f4f596f0fc43cf8533",
+   "bytes": 80610
+  },
+  "tasks/pdf-library-version-chain.js": {
+   "sha256": "2d87d89aeb61bbdd17c6d03fee7817525288b053da01bc87fabb462642aad70f",
+   "bytes": 71540
+  },
+  "tasks/php-interpreter-version-chain.js": {
+   "sha256": "41798b419982c4910773dae212e1271359976eef5f59a1686685a27e6bf83831",
+   "bytes": 68900
+  },
+  "tasks/postgres-server-version-chain.js": {
+   "sha256": "f92a26a7cb76871f83b812ece12226839995f5cbfd1d7bf6ae36282e4efc55ea",
+   "bytes": 106999
+  },
+  "tasks/protobuf-grpc-edition-chain.js": {
+   "sha256": "726d0932cbad1fb66c58a58c51efb4da0ad9cabfc42b6a6b67003061523afc0c",
+   "bytes": 46462
+  },
+  "tasks/python-package-resolver-multiversion.js": {
+   "sha256": "c7559b2c18d4edd94509cc2b3849bb30f2705b469c6f5c86b74fea117f306e2d",
+   "bytes": 88852
+  },
+  "tasks/python2-to-3.14-sublime-elasticsearch-client.js": {
+   "sha256": "1c5803e0eb7caa5d6380741c9f3ea97f09d63a01ad7a235c909ad3df3e47e18b",
+   "bytes": 121288
+  },
+  "tasks/quic-http3-stack-multiversion.js": {
+   "sha256": "05d890e26467a0391ec363a3417593a5cf8088db8fc07fbfd3e31536051c6cae",
+   "bytes": 360362
+  },
+  "tasks/react-classes-to-19.js": {
+   "sha256": "e434a3b2be9fb026e5c28ff3c7014c5427c4ac9ee21a9f4f87869e6a184da7b5",
+   "bytes": 123687
+  },
+  "tasks/redis-server-version-chain.js": {
+   "sha256": "c229407eefde3efc32124d54e3d7ddf899948bb9ec7504953611e3e7f7b9fd7d",
+   "bytes": 70949
+  },
+  "tasks/ruby-interpreter-version-chain.js": {
+   "sha256": "ca3ebf5293dbf892b17201a32c06bd714ffba8cad832ade4bc92cbe11757c3ff",
+   "bytes": 53551
+  },
+  "tasks/simd-image-primitives.js": {
+   "sha256": "cb365be9da448946f0e439e8bc8ac67aea661490e790b49a0de5fa24ffac62f2",
+   "bytes": 64628
+  },
+  "tasks/simdutf-transcoding-simd.js": {
+   "sha256": "c4836fdcb4d378f80ada38005715e4b5be601b065e41fd33edae250eec906e98",
+   "bytes": 48554
+  },
+  "tasks/smb-server-dialect-chain.js": {
+   "sha256": "815f67480cd34d9b4fda8960f1dc36337bd2192396ebdb35f423411cd890dad8",
+   "bytes": 74745
+  },
+  "tasks/sql-database-multiversion.js": {
+   "sha256": "4f935ddacc740c98166fe3e87f2b75aa83f75648b51253c8224fe4c0a09e71d5",
+   "bytes": 60277
+  },
+  "tasks/srsran-5g-phy-kernels.js": {
+   "sha256": "2d2d6e4a876b880b11bdf9d1a14f2b83eafa133d87f70763ea163f357bf500da",
+   "bytes": 50840
+  },
+  "tasks/srt-live-transport-multiversion.js": {
+   "sha256": "bfa8dd1e6f632e3017893334d7ce13dc327071bd4827de361a34097aef72d811",
+   "bytes": 104130
+  },
+  "tasks/stringzilla-text-ingest.js": {
+   "sha256": "96179f931657b32c5917c6c51c680103709cf78c524dd90a60c2ae8f8ead17f5",
+   "bytes": 45563
+  },
+  "tasks/svtjpegxs-codec-avx2.js": {
+   "sha256": "385c5b1dc356f30a5712da959642f40d0ab8b6779cce01497da47a23b8862d00",
+   "bytes": 61316
+  },
+  "tasks/tls13-protocol-stack-multiversion.js": {
+   "sha256": "8258da3ce6962090a5a6056ef7b750b0bc65157f3adcb83a3b02089b46c46bf0",
+   "bytes": 90881
+  },
+  "tasks/tree-sitter-multiversion.js": {
+   "sha256": "49712847956e17a31436ed806f28755d67efbb234e211cd628786584b12210a3",
+   "bytes": 65913
+  },
+  "tasks/turso-engine-multiversion.js": {
+   "sha256": "dd486b83d5dfe2624c3e81b2b795ef9b5224a38bae0e912e8eddee97b5b4e057",
+   "bytes": 130704
+  },
+  "tasks/uvg266-encoder-strategies.js": {
+   "sha256": "c3aef24f386346e81be630c0e7d9eab91d7befd4913f7645874f99efd2b00152",
+   "bytes": 44393
+  },
+  "tasks/vortex-columnar-bit-kernels.js": {
+   "sha256": "9f390a50be8c90df21b67de002acba40a7f70c687581f8149d0229a94cad2dce",
+   "bytes": 33880
+  },
+  "tasks/zcash-consensus-node-multiversion.js": {
+   "sha256": "2df150531481b4a3bd75270304c6785e51c01d0feb7d8234311daa44a26f3b8f",
+   "bytes": 145257
+  }
+ }
+}
