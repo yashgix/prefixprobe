@@ -1,0 +1,25 @@
+name: ci
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install numpy==2.5.4 scipy==1.18.1 ruff==0.17.4
+      - run: make lint
+      # The results data has no stated license and lives on Klavis's site, so it is fetched only on a manual run;
+      # on push and pull requests the tests that need it skip.
+      - if: github.event_name == 'workflow_dispatch'
+        run: python3 tools/fetch_data.py
+      - run: make test
