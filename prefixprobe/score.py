@@ -1,98 +1,96 @@
+"""Scoring a held-out model against a prefix probe."""
+
 from __future__ import annotations
 
 import numpy as np
+from scipy.special import expit as sigmoid
 
-from .model import fit_ability
-
-
-def _sigmoid(x):
-    x = np.asarray(x, dtype=float)
-    return 0.5 * (1.0 + np.tanh(0.5 * x))
+from prefixprobe.model import fit_ability
 
 
-def _probe_mask(bench, depths):
-    depths = np.asarray(depths, dtype=int)
-    if len(bench.task_of) == 0:
-        return np.zeros(0, dtype=bool)
-    return bench.position < depths[bench.task_of]
-
-
-def _rate(numerator, denominator):
-    if denominator == 0:
-        return 0.0
-    return float(100.0 * numerator / denominator)
+def _probe_mask(bench, depths: np.ndarray) -> np.ndarray:
+    depth_per_step = np.repeat(depths, np.diff(bench.start))
+    return bench.position < depth_per_step
 
 
 def score(bench, fold, depths) -> dict:
-    model_index = bench.models.index(fold.model)
-    passes = bench.passes[model_index]
-    runs = bench.runs[model_index]
-    on_track = bench.on_track[model_index]
-    reached = bench.reached[model_index]
+    """Score the held-out model using only its probed prefixes."""
+    depths = np.asarray(depths, dtype=int)
+    if depths.shape != (len(bench.tasks),):
+        raise ValueError("depths must have one entry per task")
 
     probe = _probe_mask(bench, depths)
-    other = ~probe
-    d = np.asarray(fold.d, dtype=float)
-    e = np.asarray(fold.e, dtype=float)
+    unprobed = ~probe
 
-    ability = float(fit_ability(d[probe], passes[probe], runs[probe]))
-    on_track_ability = float(fit_ability(e[probe], on_track[probe], reached[probe]))
+    model = bench.models.index(fold.model)
+    passes = bench.passes[model]
+    runs = bench.runs[model]
+    on_track = bench.on_track[model]
+    reached = bench.reached[model]
+
+    ability = fit_ability(fold.d[probe], passes[probe], runs[probe])
+    on_track_ability = fit_ability(fold.e[probe], on_track[probe], reached[probe])
 
     total_runs = float(runs.sum())
-    step_rate = _rate(float(passes.sum()), total_runs)
-    step_rate_hat = _rate(
-        float(passes[probe].sum()) + float(np.sum(runs[other] * _sigmoid(ability + d[other]))),
-        total_runs,
-    )
+    total_passes = float(passes.sum())
+    step_rate = 100.0 * total_passes / total_runs if total_runs else 0.0
 
-    task_starts = bench.start[:-1]
-    task_lasts = bench.start[1:] - 1
-    first_runs = float(runs[task_starts].sum())
-    solve_rate = _rate(float(on_track[task_lasts].sum()), first_runs)
+    probed_passes = float(passes[probe].sum())
+    predicted_other_passes = float((runs[unprobed] * sigmoid(ability + fold.d[unprobed])).sum())
+    step_rate_hat = 100.0 * (probed_passes + predicted_other_passes) / total_runs if total_runs else 0.0
 
     solve_num = 0.0
     solve_den = 0.0
-    for task_index in range(len(bench.tasks)):
-        first = int(bench.start[task_index])
-        last = int(bench.start[task_index + 1])
-        length = last - first
-        if length == 0:
+    solve_hat_num = 0.0
+
+    for task_idx in range(len(bench.tasks)):
+        start = int(bench.start[task_idx])
+        end = int(bench.start[task_idx + 1])
+        task_length = end - start
+        first_runs = float(runs[start])
+        if first_runs == 0:
             continue
-        solve_den += float(runs[first])
-        depth = int(depths[task_index]) if task_index < len(depths) else 0
-        depth = max(0, min(depth, length))
+
+        solve_den += first_runs
+        solve_num += float(on_track[end - 1])
+
+        depth = int(depths[task_idx])
         if depth == 0:
-            clean = float(runs[first])
-            after = np.arange(first, last, dtype=int)
+            clean = first_runs
+            suffix = slice(start, end)
         else:
-            clean = float(on_track[first + depth - 1])
-            after = np.arange(first + depth, last, dtype=int)
-        factor = float(np.prod(_sigmoid(on_track_ability + e[after]))) if after.size else 1.0
-        solve_num += clean * factor
-    solve_rate_hat = _rate(solve_num, solve_den)
+            last_probed = min(depth, task_length) - 1
+            clean = float(on_track[start + last_probed])
+            suffix = slice(start + last_probed + 1, end)
 
-    if float(runs[other].sum()) == 0:
-        logloss = float('nan')
+        suffix_probability = 1.0
+        if suffix.start < suffix.stop:
+            suffix_probability = float(np.prod(sigmoid(on_track_ability + fold.e[suffix])))
+        solve_hat_num += clean * suffix_probability
+
+    solve_rate = 100.0 * solve_num / solve_den if solve_den else 0.0
+    solve_rate_hat = 100.0 * solve_hat_num / solve_den if solve_den else 0.0
+
+    unprobed_runs = runs[unprobed]
+    if unprobed.sum() == 0 or unprobed_runs.sum() == 0:
+        logloss = float("nan")
     else:
-        q = np.clip(_sigmoid(ability + d[other]), 1e-15, 1.0 - 1e-15)
-        logloss = float(
-            -np.sum(passes[other] * np.log(q) + (runs[other] - passes[other]) * np.log1p(-q))
-            / float(runs[other].sum())
-        )
+        p = sigmoid(ability + fold.d[unprobed])
+        losses = -(passes[unprobed] * np.log(p) + (unprobed_runs - passes[unprobed]) * np.log1p(-p))
+        logloss = float(losses.sum() / unprobed_runs.sum())
 
-    cost = np.asarray(fold.cost, dtype=float)
-    total_cost = float(np.sum(cost))
-    spend = float(np.sum(cost[probe]) / total_cost) if total_cost != 0 else 0.0
+    denominator = float(fold.cost.sum())
+    spend = float(fold.cost[probe].sum() / denominator) if denominator else 0.0
 
     return {
-        'ability': ability,
-        'on_track_ability': on_track_ability,
-        'step_rate': step_rate,
-        'step_rate_hat': step_rate_hat,
-        'solve_rate': solve_rate,
-        'solve_rate_hat': solve_rate_hat,
-        'logloss': logloss,
-        'probed_steps': int(probe.sum()),
-        'probed_tasks': int(np.sum(np.asarray(depths) > 0)),
-        'spend': spend,
+        "ability": float(ability),
+        "on_track_ability": float(on_track_ability),
+        "step_rate": float(step_rate),
+        "step_rate_hat": float(step_rate_hat),
+        "solve_rate": float(solve_rate),
+        "solve_rate_hat": float(solve_rate_hat),
+        "logloss": logloss,
+        "probed_steps": int(probe.sum()),
+        "probed_tasks": int(np.count_nonzero(depths > 0)),
+        "spend": spend,
     }
