@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 
-from prefixprobe.data import Benchmark, load
+from prefixprobe.data import DATA_DIR, Benchmark, load
 from prefixprobe.fold import Fold, make_fold
 from prefixprobe.run import BUDGETS
 from prefixprobe.select import _g, greedy_plan
@@ -53,10 +53,16 @@ def synthetic(rng, n_tasks: int, ties: bool) -> tuple[Benchmark, Fold]:
     return bench, Fold("m", zeros[0], zeros[0], cost, info, float(rng.uniform(0.0, 1.0)))
 
 
+needs_data = unittest.skipUnless(
+    (DATA_DIR / "benchmark.js").exists(), "data/ is missing; run python tools/fetch_data.py"
+)
+
+
 class GreedySpeedTest(unittest.TestCase):
     def assert_same(self, bench: Benchmark, fold: Fold, budget: float) -> None:
         np.testing.assert_array_equal(greedy_plan(bench, fold, budget), original_greedy_plan(bench, fold, budget))
 
+    @needs_data
     def test_same_plans_as_the_original_on_the_real_data(self) -> None:
         bench = load()
         for model in bench.models:
@@ -72,6 +78,7 @@ class GreedySpeedTest(unittest.TestCase):
             for budget in (0.0, 0.5, 3.0, float(fold.cost.sum()), float(fold.cost.sum()) * 2):
                 self.assert_same(bench, fold, budget)
 
+    @needs_data
     def test_real_data_plans_stay_fast(self) -> None:
         bench = load()
         folds = [make_fold(bench, model) for model in bench.models]
