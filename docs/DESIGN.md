@@ -61,8 +61,10 @@ built from the summed counts of the remaining models. The held-out model's own r
 nowhere else, through its probe. A test perturbs the held-out model's counts and checks that the fold is unchanged,
 which is the property the whole evaluation rests on.
 
-The probe is a per-task depth. Steps with `position < depth` are probed and are the only ones used for estimation;
-every other step of the held-out model is used only to compute the true rates and the log-loss.
+The probe is a per-task depth. Steps with `position < depth` are probed and are the only ones whose outcomes
+(`passes`, `on_track`, `reached`) are used for estimation; every other step's outcomes are used only to compute the
+true rates and the log-loss. The estimate does use the unprobed steps' run counts, as weights: a probe runs all of
+a task's runs, so each task's run count is fixed before probing (a data test checks it is the same at every step).
 
 ## 5. The cost proxy
 

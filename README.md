@@ -6,8 +6,8 @@ which slices should it run — and how well do those runs predict the model's fu
 Multi-step SWE chains **5–15 dependent engineering requests** on one codebase, so the natural unit is not the task but
 the *prefix*: step k of a task can only run after steps 1..k-1, and a model's own earlier work is what step k is
 scored against. Probing the first k steps of a task therefore costs the sum of those k steps' costs and yields a
-principled sample of everything behind them. `prefixprobe` uses exactly that structure: it pays for prefixes, fits one
-ability offset from them, and extrapolates to the steps and tasks it did not run.
+principled sample of everything behind them. `prefixprobe` uses exactly that structure: it pays for prefixes, fits two
+ability offsets from them, and extrapolates to the steps and tasks it did not run.
 
 Klavis AI reports that "The strongest model passes 56.8% of steps but solves only 18.5% of complete tasks" and that
 "38 of 69 tasks remain unsolved" ([blog](https://www.klavis.ai/blog/multi-step-swe)), and names a limitation: the
@@ -17,13 +17,16 @@ is not affiliated with Klavis AI and says nothing about Klavis's own process.
 
 ## The estimate, and what is actually new
 
-The estimator is a standard one-parameter item-response offset: a step's difficulty is the log-odds that the other
-models pass it, and a new model gets a single ability offset fitted by MAP under a normal prior. That is textbook
-item-response theory, not a new statistical method; the prior art is cited below.
+The estimator is a standard one-parameter item-response offset, fitted twice: a step's difficulty is the log-odds that
+the other models pass it, and a new model gets one ability offset for passing a step and a second, separately fitted
+offset for passing it after a clean prefix (which drives the solve rate), each by MAP under a normal prior. That is
+textbook item-response theory, not a new statistical method; the prior art is cited below.
 
 What is specific here is the **planning problem**. Items arrive in dependent chains, each item has its own cost, and
 the bill for a chain is the sum of its prefix. The planner spends a fixed budget on prefixes, gain per unit cost
-first, and the evaluation holds one model out entirely so the estimate never sees the results it is predicting.
+first, and the evaluation holds one model out entirely so the estimate never sees the results it is predicting. Of
+the unprobed steps it uses only their run counts: how many runs each task gets is fixed before probing, so the
+counts weight the extrapolation and no unprobed outcome enters it.
 
 ## Data
 
@@ -110,7 +113,7 @@ generation may rank steps differently from these nine.
   greedy's intervals do exclude zero.
 - **Planning is fixed in advance,** not adaptive, and the planner's design was checked on the same nine models it is
   evaluated on.
-- **The estimator is deliberately simple** — one offset, one normal prior. It is a baseline that the prefix structure
+- **The estimator is deliberately simple** — two separately fitted offsets, one normal prior. It is a baseline that the prefix structure
   has to earn its keep against, not a claim about the best possible estimator.
 
 ## Layout

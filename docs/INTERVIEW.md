@@ -14,7 +14,7 @@ Step k of a task cannot run without steps 1..k-1. So the cost of a step is never
 
 Two difficulty scales. For each step, the other eight models give two numbers. `d` is the log-odds of passing the step at all. `e` is the log-odds of passing it *given a clean prefix*. The second one is the scale the solve rate lives on, because solving a task is a chain of conditional passes.
 
-The estimator. One ability offset per model: pass probability is `sigmoid(a + d)`, with a normal prior pulled to zero, fitted by Newton's method on the probe. Solving a task is then the product of `sigmoid(a_e + e)` over the steps after the probe. That is textbook one-parameter item-response theory. I say so in the README: the statistics is not the contribution.
+The estimator. Two ability offsets per model, each fitted separately on the probe by Newton's method with a normal prior pulled to zero: `a` for passing a step, `sigmoid(a + d)`, and `a_e` for passing it after a clean prefix. Solving a task is then the product of `sigmoid(a_e + e)` over the steps after the probe. Unprobed steps enter only through their run counts, which are fixed before probing, as weights. That is textbook one-parameter item-response theory. I say so in the README: the statistics is not the contribution.
 
 The planner. The contribution is the spending rule for dependent items. Start at depth zero everywhere. A candidate extends one task deeper; it costs the steps it adds and gains information, but the information of a task saturates at a rate set by how much ability varies across tasks (`τ²`). So take the best feasible gain per unit cost until the budget is gone. It is the greedy ratio rule for a precedence-constrained knapsack, with the saturation term added because steps inside one task are not independent evidence.
 
@@ -30,9 +30,9 @@ Agent time instead of dollars: the published results carry only a dollar cost pe
 
 A fixed plan instead of an adaptive one: it is easier to evaluate honestly with nine models, and it can be costed before it runs.
 
-A weak normal prior on the ability offset: a probe can be a handful of steps, and the prior keeps a single lucky step from producing an ability of five; it stops mattering once the probe is deep.
+A weak normal prior on each ability offset: a probe can be a handful of steps, and the prior keeps a single lucky step from producing an ability of five; it stops mattering once the probe is deep.
 
-A deliberately simple estimator (one offset, one prior, a moment estimate for `τ²`): it is the baseline the prefix structure has to earn its keep against, not a claim about the best possible estimator.
+A deliberately simple estimator (two separately fitted offsets, one prior, a moment estimate for `τ²`): it is the baseline the prefix structure has to earn its keep against, not a claim about the best possible estimator.
 
 ## Results
 
