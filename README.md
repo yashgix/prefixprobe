@@ -56,7 +56,7 @@ not money, and it says nothing about how fast a *new* model would be.
 ```bash
 make test                                          # unittest suite (data tests skip without data/)
 make lint                                          # ruff check + format check
-python experiment.py --out results/metrics.json    # ~7 minutes on one core, ~30 KB
+python experiment.py --out results/metrics.json    # ~7 minutes on one core, ~23 KB
 python demo.py                                     # one-line summary
 python demo.py --readme README.md --out README.md  # refresh the results block below
 ```
@@ -103,8 +103,11 @@ generation may rank steps differently from these nine.
 - **The cost proxy is agent time, not dollars,** taken from the other models, and a new model's own speed is unknown.
 - **Log-loss is computed on each plan's own unprobed steps,** so it is not comparable across strategies. The
   step-rate and solve-rate errors are.
-- **Absolute errors are biased upward by the resampling.** The paired differences are the fair comparison and are
-  what the tables lead with.
+- **Absolute errors are biased upward by the resampling,** so a point MAE can sit below its own interval. The paired
+  differences are the fair comparison; each budget has its own table of them.
+- **No significant gain over random.** Every paired interval against `random`, for step rate and solve rate, includes
+  zero, and greedy's solve-rate error is higher than `cheapest_tasks`'s at every budget. The paired tables show where
+  greedy's intervals do exclude zero.
 - **Planning is fixed in advance,** not adaptive, and the planner's design was checked on the same nine models it is
   evaluated on.
 - **The estimator is deliberately simple** — one offset, one normal prior. It is a baseline that the prefix structure

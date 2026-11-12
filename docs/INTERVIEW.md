@@ -42,7 +42,7 @@ The generated table in the README is the answer: at each budget, the step-rate a
 
 ## Limitations
 
-Nine folds is nine points; the bootstrap is over tasks, not models. The cost proxy is other models' agent time, not dollars. Log-loss is computed on each plan's own unprobed steps and is therefore a calibration diagnostic, not a ranking. Planning is fixed in advance rather than adaptive, and I designed the planner while looking at the same nine models it is evaluated on.
+Nine folds is nine points; the bootstrap is over tasks, not models. Against random, every paired interval includes zero, so greedy's gain over random is not significant, and greedy's solve-rate error is higher than cheapest-tasks' at every budget. The cost proxy is other models' agent time, not dollars. Log-loss is computed on each plan's own unprobed steps and is therefore a calibration diagnostic, not a ranking. Planning is fixed in advance rather than adaptive, and I designed the planner while looking at the same nine models it is evaluated on.
 
 ## What I learned
 
