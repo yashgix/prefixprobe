@@ -56,7 +56,7 @@ not money, and it says nothing about how fast a *new* model would be.
 ```bash
 make test                                          # unittest suite (data tests skip without data/)
 make lint                                          # ruff check + format check
-python experiment.py --out results/metrics.json    # ~2 minutes, ~30 KB
+python experiment.py --out results/metrics.json    # ~7 minutes on one core, ~30 KB
 python demo.py                                     # one-line summary
 python demo.py --readme README.md --out README.md  # refresh the results block below
 ```
