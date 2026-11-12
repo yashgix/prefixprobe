@@ -17,6 +17,9 @@ from prefixprobe.run import (
     PAIRS,
     RANDOM_DRAWS,
     TARGETS,
+    _add_pairs,
+    _add_target,
+    _interval,
     errors,
     grid,
     main,
@@ -219,6 +222,68 @@ class SummaryTest(unittest.TestCase):
         self.assertGreater(len(numbers), 0)
         for number in numbers:
             self.assertEqual(round(number, 6), number)
+
+
+def _cells(values):
+    """point/replicate layout with every cell 0.0 except those in ``values``: {(budget, strategy, model): error}."""
+    return {b: {s: {m: values.get((b, s, m), 0.0) for m in ("a", "b")} for s in STRATEGIES} for b in BUDGETS}
+
+
+class HandComputedTest(unittest.TestCase):
+    """Intervals, paired differences and replicate shares on numbers small enough to check by hand."""
+
+    B = BUDGETS[0]
+
+    def setUp(self):
+        errors = _cells({(self.B, "greedy", "a"): -1.0, (self.B, "greedy", "b"): 3.0,
+                         (self.B, "none", "a"): 2.0, (self.B, "none", "b"): -3.0,
+                         (self.B, "random", "a"): 4.0, (self.B, "random", "b"): 1.0})  # fmt: skip
+        self.point = {b: {s: {m: {"step": e, "step_abs": abs(e)} for m, e in row.items()}
+                          for s, row in cells.items()} for b, cells in errors.items()}  # fmt: skip
+        # Replicate r: greedy's error on model a is -r, none's is 2; |greedy| averages r/2 and |none| 1.
+        self.reps = []
+        for r in range(5):
+            cells = _cells({(self.B, "greedy", "a"): -float(r), (self.B, "none", "a"): 2.0})
+            self.reps.append({b: {s: {m: {"step": e} for m, e in row.items()} for s, row in c.items()}
+                              for b, c in cells.items()})  # fmt: skip
+        self.summary = {}
+        _add_target(self.summary, self.point, self.reps, ["a", "b"], "step")
+        _add_pairs(self.summary, self.point, self.reps, ["a", "b"], "step")
+
+    def test_interval_is_numpy_linear_percentiles_per_position(self):
+        # Five values: the 2.5th percentile sits at position 0.1, the 97.5th at 3.9.
+        lo, hi = _interval([[1, 10], [2, 20], [3, 30], [4, 40], [5, 50]])
+        np.testing.assert_allclose(lo, [1.1, 11.0])
+        np.testing.assert_allclose(hi, [4.9, 49.0])
+        self.assertEqual(_interval([]), ([], []))
+
+    def test_mae_and_its_replicate_interval(self):
+        greedy = CELLS.index((self.B, "greedy"))
+        self.assertAlmostEqual(self.summary["step_mae"][greedy], 2.0)
+        self.assertAlmostEqual(self.summary["step_mae"][CELLS.index((self.B, "random"))], 2.5)
+        # Replicate MAEs 0, 0.5, 1, 1.5, 2.
+        self.assertAlmostEqual(self.summary["step_mae_lo"][greedy], 0.05)
+        self.assertAlmostEqual(self.summary["step_mae_hi"][greedy], 1.95)
+        # Signed errors of greedy on model a: 0, -1, -2, -3, -4.
+        self.assertAlmostEqual(self.summary["step_err_lo"][greedy * 2], -3.9)
+        self.assertAlmostEqual(self.summary["step_err_hi"][greedy * 2], -0.1)
+
+    def test_paired_differences_counts_and_shares(self):
+        none, rand = PAIRS.index((self.B, "none")), PAIRS.index((self.B, "random"))
+        diff = self.summary["greedy_vs_step_mae_diff"]
+        self.assertAlmostEqual(diff[none], -0.5)
+        self.assertAlmostEqual(diff[rand], -0.5)
+        # Greedy's |error| 1 and 3 against none's 2 and 3 (a tie is not better), random's 4 and 1: model a only.
+        self.assertEqual(self.summary["greedy_vs_step_models_better"][none], 1)
+        self.assertEqual(self.summary["greedy_vs_step_models_better"][rand], 1)
+        # Replicate differences against none: r/2 - 1 = -1, -0.5, 0, 0.5, 1 (absolute errors, not signed).
+        self.assertAlmostEqual(self.summary["greedy_vs_step_mae_diff_lo"][none], -0.95)
+        self.assertAlmostEqual(self.summary["greedy_vs_step_mae_diff_hi"][none], 0.95)
+        self.assertAlmostEqual(self.summary["greedy_vs_step_share_replicates_better"][none], 0.4)
+        # Against random (all zero in the replicates): r/2 = 0 ... 2, never better.
+        self.assertAlmostEqual(self.summary["greedy_vs_step_mae_diff_lo"][rand], 0.05)
+        self.assertAlmostEqual(self.summary["greedy_vs_step_mae_diff_hi"][rand], 1.95)
+        self.assertAlmostEqual(self.summary["greedy_vs_step_share_replicates_better"][rand], 0.0)
 
 
 class MainTest(unittest.TestCase):
