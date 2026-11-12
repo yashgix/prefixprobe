@@ -86,6 +86,13 @@ class SelectTest(unittest.TestCase):
         plan = greedy_plan(self.bench, fold, 4.0)
         self.assertEqual(plan.tolist(), [0, 1, 0])
 
+    def test_greedy_plan_saturates_with_tau2(self) -> None:
+        # Unit costs, budget 2. With tau2=0 the second t0 step still gains 4 and wins over t1's 2. With tau2=1,
+        # g(I) = I/(1+I): t0 goes 4/5 -> 8/9 (gain 0.09) while t1's first step gains 2/3, so the plan spreads.
+        info = np.array([4.0, 4.0, 2.0, 0.0, 0.0, 0.0])
+        self.assertEqual(greedy_plan(self.bench, make_fold(info=info, tau2=0.0), 2.0).tolist(), [2, 0, 0])
+        self.assertEqual(greedy_plan(self.bench, make_fold(info=info, tau2=1.0), 2.0).tolist(), [1, 1, 0])
+
     def test_make_plan_dispatches_and_rejects_unknown_names(self) -> None:
         fold = make_fold(cost=COST)
         none = make_plan("none", self.bench, fold, 5.0, np.random.default_rng(0))
