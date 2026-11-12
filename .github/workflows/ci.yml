@@ -1,10 +1,14 @@
 name: ci
 on:
   push:
+    branches: [main]
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -18,8 +22,7 @@ jobs:
           python-version: "3.14"
       - run: pip install numpy==2.5.4 scipy==1.18.1 ruff==0.17.4
       - run: make lint
-      # The results data has no stated license and lives on Klavis's site, so it is fetched only on a manual run;
-      # on push and pull requests the tests that need it skip.
-      - if: github.event_name == 'workflow_dispatch'
-        run: python3 tools/fetch_data.py
+      # The site's robots.txt allows fetching, but the data has no stated license: it is downloaded fresh (70 files,
+      # about 7 MB, one request a second) and checked against data/MANIFEST.json, and never cached or uploaded.
+      - run: python3 tools/fetch_data.py
       - run: make test
