@@ -44,8 +44,9 @@ def _interval(center, low, high):
     return f"{_num(center)} [{_num(low)}, {_num(high)}]"
 
 
-def _percent(value, spec=".1f"):
-    return ABSENT if _missing(value) else format(100.0 * value, spec) + "%"
+def _percent(value, spec=".1f", scale=100.0):
+    """A share as a percentage; pass ``scale=1.0`` for values already in percent."""
+    return ABSENT if _missing(value) else format(scale * value, spec) + "%"
 
 
 def _cell(metrics, key, budget_index, strategy):
@@ -120,10 +121,19 @@ def _strategy_table(metrics, budget_index):
     return lines
 
 
+def _pair_interval(metrics, key, budget_index, strategy):
+    return _interval(
+        _pair(metrics, key, budget_index, strategy),
+        _pair(metrics, f"{key}_lo", budget_index, strategy),
+        _pair(metrics, f"{key}_hi", budget_index, strategy),
+    )
+
+
 def _compare_table(metrics, budget_index):
     lines = [
-        "| Greedy minus | Step-rate MAE difference | Models better under greedy | Replicates better |",
-        "| --- | --- | --- | --- |",
+        "| Greedy minus | Step-rate MAE difference | Solve-rate MAE difference | Models better on step rate "
+        "| Replicates better on step rate |",
+        "| --- | --- | --- | --- | --- |",
     ]
     for strategy in OTHERS:
         lines.append(
@@ -131,11 +141,8 @@ def _compare_table(metrics, budget_index):
             + " | ".join(
                 [
                     f"`{strategy}`",
-                    _interval(
-                        _pair(metrics, "greedy_vs_step_mae_diff", budget_index, strategy),
-                        _pair(metrics, "greedy_vs_step_mae_diff_lo", budget_index, strategy),
-                        _pair(metrics, "greedy_vs_step_mae_diff_hi", budget_index, strategy),
-                    ),
+                    _pair_interval(metrics, "greedy_vs_step_mae_diff", budget_index, strategy),
+                    _pair_interval(metrics, "greedy_vs_solve_mae_diff", budget_index, strategy),
                     f"{_num(_pair(metrics, 'greedy_vs_step_models_better', budget_index, strategy), '.0f')}"
                     f"/{metrics['models']}",
                     _percent(_pair(metrics, "greedy_vs_step_share_replicates_better", budget_index, strategy)),
@@ -176,8 +183,8 @@ def _model_section(metrics, ids):
         label = ids[model_index] if model_index < len(ids) else f"model {model_index + 1}"
         cells = [
             f"`{label}`",
-            _percent(metrics["model_step_rate"][model_index]),
-            _percent(metrics["model_solve_rate"][model_index]),
+            _percent(metrics["model_step_rate"][model_index], scale=1.0),
+            _percent(metrics["model_solve_rate"][model_index], scale=1.0),
         ]
         for strategy in STRATEGIES:
             cells.append(_model_interval(metrics, "step_err", index, strategy, model_index))

@@ -39,6 +39,8 @@ def _metrics(models=3, replicates=8):
         metrics[key] = _series(cells * models, -1.0)
     for key in ("greedy_vs_step_mae_diff", "greedy_vs_step_mae_diff_lo", "greedy_vs_step_mae_diff_hi"):
         metrics[key] = _series(pairs, -0.5)
+    for key in ("greedy_vs_solve_mae_diff", "greedy_vs_solve_mae_diff_lo", "greedy_vs_solve_mae_diff_hi"):
+        metrics[key] = _series(pairs, 0.25)
     metrics["greedy_vs_step_models_better"] = [2] * pairs
     metrics["greedy_vs_step_share_replicates_better"] = [0.75] * pairs
     return metrics
@@ -66,6 +68,15 @@ class RenderTest(unittest.TestCase):
         self.assertIn("`gamma`", block)
         self.assertIn("75.0%", block)
         self.assertTrue(block.endswith("\n"))
+
+    def test_model_rates_render_in_percent_unscaled(self):
+        block = render_block(_metrics(), ("alpha", "beta", "gamma"))
+        self.assertIn("| `alpha` | 50.0% | 20.0% |", block)
+        self.assertNotIn("5000.0%", block)
+
+    def test_compare_table_shows_both_targets(self):
+        block = render_block(_metrics())
+        self.assertIn("| `none` | -0.50 [-0.50, -0.50] | 0.25 [0.25, 0.25] | 2/3 | 75.0% |", block)
 
     def test_models_without_ids_are_numbered(self):
         block = render_block(_metrics())
