@@ -67,8 +67,9 @@ every other step of the held-out model is used only to compute the true rates an
 ## 5. The cost proxy
 
 The data has no per-step dollar cost — the published figure is one average per model — so the planner works in
-agent time: `cost = seconds / timed`, the mean recorded agent seconds per run of a step, taken over all models. It is
-a proxy: it prices an hour of a new model as an hour of the average old one, and it ignores that a weaker model may
+agent time: `cost = seconds / timed`, the mean recorded agent seconds per timed run of a step, pooled over the
+other eight models only (`make_fold`, §4), so the held-out model's own times never enter its plan. It is a
+proxy: it prices an hour of a new model as an hour of the average old one, and it ignores that a weaker model may
 need longer. Planning in dollars would need per-step billing the site does not publish.
 
 ## 6. Strategies
