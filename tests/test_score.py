@@ -144,5 +144,69 @@ class ScoreTest(unittest.TestCase):
                     self.assertEqual(before[name], after[name])
 
 
+def unequal_runs_bench() -> Benchmark:
+    """make_bench with model "a" run 3 times on t0 and 5 times on t1, so run counts vary across tasks."""
+    bench = make_bench()
+    rows = {
+        "runs": [3, 3, 3, 5, 5],
+        "passes": [2, 3, 1, 4, 2],
+        "on_track": [2, 1, 1, 4, 2],
+        "reached": [3, 2, 1, 5, 4],
+    }
+    changed = {}
+    for field, row in rows.items():
+        counts = getattr(bench, field).copy()
+        counts[0] = row
+        changed[field] = counts
+    return replace(bench, **changed)
+
+
+def with_t1_runs(bench: Benchmark, n: float) -> Benchmark:
+    runs, reached = bench.runs.copy(), bench.reached.copy()
+    runs[0, 3:] = n
+    reached[0, 3] = n
+    return replace(bench, runs=runs, reached=reached)
+
+
+class RunCountWeightTest(unittest.TestCase):
+    """Unprobed outcomes never enter the estimate; run counts, fixed before probing, weight it."""
+
+    def setUp(self):
+        self.bench = unequal_runs_bench()
+        self.fold = make_fold(self.bench, "a")
+
+    def test_unprobed_outcomes_never_move_the_estimate(self):
+        for depths, unprobed in (([1, 1], [1, 2, 4]), ([0, 2], [0, 1, 2]), ([2, 0], [2, 3, 4])):
+            before = score(self.bench, self.fold, depths)
+            for field in ("passes", "on_track", "reached"):
+                with self.subTest(depths=depths, field=field):
+                    counts = getattr(self.bench, field).copy()
+                    counts[0, unprobed] = 0.0
+                    after = score(replace(self.bench, **{field: counts}), self.fold, depths)
+                    for name in ("ability", "on_track_ability", "step_rate_hat", "solve_rate_hat"):
+                        self.assertEqual(before[name], after[name])
+
+    def test_run_counts_weight_the_extrapolation(self):
+        fits = []
+        for n in (5.0, 8.0):
+            with self.subTest(t1_runs=n):
+                bench = with_t1_runs(self.bench, n)
+                out = score(bench, self.fold, [1, 0])  # probes step 0 only; t1 is wholly unprobed
+                a, a_e = out["ability"], out["on_track_ability"]
+                fits.append((a, a_e))
+                runs, d, e = bench.runs[0], self.fold.d, self.fold.e
+                step = (bench.passes[0, 0] + np.sum(runs[1:] * sigmoid(a + d[1:]))) / runs.sum()
+                clean = bench.on_track[0, 0] * sigmoid(a_e + e[1:3]).prod() + n * sigmoid(a_e + e[3:]).prod()
+                solve = clean / (runs[0] + n)
+                self.assertAlmostEqual(out["step_rate_hat"], 100.0 * step)
+                self.assertAlmostEqual(out["solve_rate_hat"], 100.0 * solve)
+        self.assertEqual(fits[0], fits[1])
+
+    def test_full_probe_reproduces_the_true_rates(self):
+        out = score(self.bench, self.fold, [3, 2])
+        self.assertAlmostEqual(out["step_rate_hat"], out["step_rate"])
+        self.assertAlmostEqual(out["solve_rate_hat"], out["solve_rate"])
+
+
 if __name__ == "__main__":
     unittest.main()

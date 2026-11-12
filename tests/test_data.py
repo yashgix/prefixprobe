@@ -134,3 +134,5 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(task_runs.sum(axis=1).tolist(), [276.0] * 6 + [275.0] + [276.0] * 2)
         for s in bench.start[:-1]:
             np.testing.assert_array_equal(bench.reached[:, s], bench.runs[:, s])
+        # Run counts are fixed per task before probing, so score() may weight unprobed steps by them.
+        np.testing.assert_array_equal(bench.runs, task_runs[:, bench.task_of])
