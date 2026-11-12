@@ -125,5 +125,10 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(len(bench.tasks), 69)
         self.assertEqual(bench.passes.shape, (9, 574))
         self.assertEqual(int(bench.runs.sum()), 20651)
+        task_runs = bench.runs[:, bench.start[:-1]]
+        expected = np.full(task_runs.shape, 4.0)
+        expected[bench.models.index("qwen"), bench.tasks.index("pcre2-regex-engine-multiversion")] = 3.0
+        np.testing.assert_array_equal(task_runs, expected)
+        self.assertEqual(task_runs.sum(axis=1).tolist(), [276.0] * 6 + [275.0] + [276.0] * 2)
         for s in bench.start[:-1]:
             np.testing.assert_array_equal(bench.reached[:, s], bench.runs[:, s])
