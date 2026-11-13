@@ -1,7 +1,7 @@
 [project]
 name = "prefixprobe"
 version = "0.1.0"
-description = "Score a new model on Multi-step SWE from a budgeted, dependency-aware set of task prefixes"
+description = "Estimate a new model's Multi-step SWE step and solve rates from a budgeted, dependency-aware set of task prefixes"
 requires-python = ">=3.12"
 dependencies = ["numpy==2.5.4", "scipy==1.18.1"]
 
