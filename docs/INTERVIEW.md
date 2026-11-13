@@ -55,7 +55,7 @@ That the unit of cost in a chained benchmark is the prefix, not the step, and th
 - The estimator is textbook one-parameter item-response theory; the contribution is the greedy gain-per-cost planner over task extensions, with saturation set by `τ²`.
 - The held-out model never informs its own fold: difficulties, costs, information and variance come from the other eight models.
 - Strategies are compared by paired greedy-minus-alternative differences within a bootstrap replicate, because absolute error intervals shift upward under resampling.
-- Every result number comes from the README's generated table (`demo.py`); none is typed by hand.
+- Every result number comes from the README's generated table (`demo.py`); the README's summary quotes it by hand.
 
 ## Questions to expect
 
