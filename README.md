@@ -15,6 +15,29 @@ benchmark does "not yet isolate accumulated errors from intrinsic step difficult
 prefix-aware estimate of a new model rather than another complete run. This repository is an independent analysis; it
 is not affiliated with Klavis AI and says nothing about Klavis's own process.
 
+## What the experiment found
+
+Each of the nine models in the benchmark's published results is held out in turn. A planner spends a budget, measured as a share
+of the full benchmark's cost in recorded agent time, on task prefixes. The estimator then predicts the held-out
+model's full step rate and solve rate, and the prediction is scored against its real results. The dependency-aware
+`greedy` planner is compared with four simple baselines: `none` (no probe), `random` prefixes, `uniform` (the same
+depth in every task) and `cheapest_tasks` (whole tasks, cheapest first).
+
+- **Step rate, point estimates.** At a 10% budget, greedy's mean absolute error is 2.12 percentage points, against
+  4.41 for random and 4.37 for cheapest_tasks. For the strongest model (`opus`, true step rate 56.8%) the greedy
+  probe's estimate is 3.49 points low, and with no probe it is 23.83 points low.
+- **Not significant against random.** The paired greedy-minus-random interval includes zero at every budget, for
+  step rate and for solve rate (at 10%: step rate -2.29, interval -4.23 to 1.27). With nine models, this study does
+  not show that greedy beats random selection.
+- **No solve-rate gain.** Greedy's solve-rate error is higher than cheapest_tasks' at every budget (2.08 against 0.96
+  at 10%), so the method does not improve solve-rate estimation.
+- **Where greedy's intervals do exclude zero:** on step rate against `none` at every budget (and `uniform`, which
+  cannot afford any depth at 5% and 10% and so spends nothing), and against cheapest_tasks at 20% and 30%.
+
+So the result is modest: a better step-rate estimate than no probe and than whole cheap tasks at the larger
+budgets, not a proven better selection method. The numbers are quoted from the generated tables under
+[Results](#results).
+
 ## The estimate, and what is actually new
 
 The estimator is a standard one-parameter item-response offset, fitted twice: a step's difficulty is the log-odds that
@@ -43,9 +66,10 @@ imported or executed. The published results cover 69 tasks, 574 steps and nine m
 model has three runs on one task), and runs continue after a failed step — so a run's first k scores are exactly what
 a probe of that task's first k steps would have produced.
 
-**Terms.** The site states no license for this data. It is used for analysis only and is never redistributed: a
-public copy of this repository would carry only code, `tools/fetch_data.py`, `data/MANIFEST.json` and derived
-aggregate results — never the benchmark text. Nothing here quotes task instructions or any other part of the data.
+**Terms.** The site states no license for this data, so this repository does not include it. It carries only
+code, `tools/fetch_data.py`, `data/MANIFEST.json` and the derived aggregate results in `results/metrics.json`, never
+the benchmark text, and nothing here quotes task instructions or any other part of the data. To reproduce the
+experiment, fetch the data yourself for your own analysis; `.gitignore` keeps the fetched files out of commits.
 
 ## The cost proxy
 
@@ -56,7 +80,12 @@ not money, and it says nothing about how fast a *new* model would be.
 
 ## Running it
 
+Python 3.12 or later:
+
 ```bash
+python3 -m venv .venv && . .venv/bin/activate
+pip install numpy==2.5.4 scipy==1.18.1 ruff
+python tools/fetch_data.py                         # needed by the experiment and the data tests
 make test                                          # unittest suite (data tests skip without data/)
 make lint                                          # ruff check + format check
 python experiment.py --out results/metrics.json    # ~7 minutes on one core, ~23 KB
@@ -209,9 +238,21 @@ generation may rank steps differently from these nine.
 ```
 prefixprobe/   data loading, difficulty model, folds, planners, scoring, experiment runner
 tests/         unittest suite; data-dependent tests skip with a message when data/ is absent
-data/          pinned benchmark modules and MANIFEST.json (analysis only, never redistributed)
+data/          MANIFEST.json; tools/fetch_data.py downloads the benchmark modules here (never committed)
 tools/         fetch_data.py
 experiment.py  command line: writes results/metrics.json
 demo.py        one-line summary and README rendering
 docs/          design notes and a five-minute explanation
+results/       metrics.json from the committed run
 ```
+
+## How this was built
+
+Yash Gupta directed the project. AI coding agents (Claude Code and an agent build pipeline) wrote most of the code
+and tests, and automated model reviews checked them. Those reviews are not an external audit. The evidence is the
+code, the tests and the reproducible `results/metrics.json`.
+
+## License
+
+MIT for this repository's code (`LICENSE`). The Multi-step SWE results data is not included and is not covered by
+this license.

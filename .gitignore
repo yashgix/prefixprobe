@@ -1,2 +1,8 @@
 __pycache__/
 *.pyc
+.venv/
+.env
+.ruff_cache/
+# Multi-step SWE data has no stated license: fetch it locally, never commit it.
+data/benchmark.js
+data/tasks/

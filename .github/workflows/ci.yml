@@ -22,7 +22,5 @@ jobs:
           python-version: "3.14"
       - run: pip install numpy==2.5.4 scipy==1.18.1 ruff==0.17.4
       - run: make lint
-      # The site's robots.txt allows fetching, but the data has no stated license: it is downloaded fresh (70 files,
-      # about 7 MB, one request a second) and checked against data/MANIFEST.json, and never cached or uploaded.
-      - run: python3 tools/fetch_data.py
+      # The benchmark data has no stated license, so CI never downloads it; the data tests skip without it.
       - run: make test
