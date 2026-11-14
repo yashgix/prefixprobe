@@ -79,6 +79,8 @@ h1 { font-size: var(--s4); font-weight: 700; letter-spacing: -0.03em; }
 .figure { border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
 .svg-wrap { overflow-x: auto; }
 .svg-wrap svg { display: block; width: 100%; min-width: 520px; height: auto; }
+.m-only { display: none; }
+td.ex { color: var(--accent); font-weight: 600; }
 svg text { font-family: var(--sans); fill: var(--muted); }
 svg .lbl { font-size: 13px; font-weight: 600; }
 svg .tick { font-size: 12px; }
@@ -98,6 +100,17 @@ tr.hl td { background: var(--accent-soft); }
 .btn { display: inline-flex; align-items: center; gap: 0.4rem; font: inherit; font-weight: 500; padding: 0.55rem 1rem; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); background: var(--paper); cursor: pointer; }
 footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); }
 
+@media (max-width: 640px) {
+  /* Phones: fit each chart to the screen, crop the in-chart value column and show the values as text instead. */
+  .svg-wrap { overflow: hidden; }
+  .svg-wrap svg { min-width: 0; }
+  .svg-wrap svg.line { width: 114.3%; }
+  .svg-wrap svg.forest { width: 125.4%; }
+  svg .tick { font-size: 22px; }
+  svg .lbl { font-size: 24px; }
+  svg .val { display: none; }
+  .m-only { display: block; }
+}
 @media (max-width: 760px) {
   .verdict { grid-template-columns: minmax(0, 1fr); }
   .brand { display: none; }
@@ -146,13 +159,13 @@ footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); }
         <span><i style="background:var(--none)"></i>no probe</span>
       </div>
       <div class="svg-wrap">
-        <svg viewBox="0 0 720 300" role="img" aria-label="Mean absolute step-rate error in points by budget. Greedy 3.96, 2.12, 1.39, 1.28. Random 6.23, 4.41, 3.02, 2.32. Cheapest tasks 4.62, 4.37, 5.31, 3.98. No probe 11.11 at every budget.">
+        <svg class="line" viewBox="0 0 720 300" role="img" aria-label="Mean absolute step-rate error in points by budget. Greedy 3.96, 2.12, 1.39, 1.28. Random 6.23, 4.41, 3.02, 2.32. Cheapest tasks 4.62, 4.37, 5.31, 3.98. No probe 11.11 at every budget.">
           <g stroke="var(--grid)" stroke-width="1">
             <line x1="60" y1="260" x2="600" y2="260"/><line x1="60" y1="200" x2="600" y2="200"/><line x1="60" y1="140" x2="600" y2="140"/><line x1="60" y1="80" x2="600" y2="80"/><line x1="60" y1="20" x2="600" y2="20"/>
           </g>
           <g class="tick" text-anchor="end"><text x="50" y="264">0</text><text x="50" y="204">3</text><text x="50" y="144">6</text><text x="50" y="84">9</text><text x="50" y="24">12</text></g>
           <g class="tick" text-anchor="middle"><text x="150" y="282">5%</text><text x="240" y="282">10%</text><text x="420" y="282">20%</text><text x="600" y="282">30%</text></g>
-          <text class="tick" x="14" y="140" transform="rotate(-90 14 140)" text-anchor="middle">error, points</text>
+          <text class="tick" x="18" y="140" transform="rotate(-90 18 140)" text-anchor="middle">error, points</text>
           <polyline points="150,37.8 600,37.8" fill="none" stroke="var(--none)" stroke-width="2" stroke-dasharray="5 5"/>
           <polyline points="150,167.6 240,172.6 420,153.8 600,180.4" fill="none" stroke="var(--cheap)" stroke-width="2.5"/>
           <polyline points="150,135.4 240,171.8 420,199.6 600,213.6" fill="none" stroke="var(--random)" stroke-width="2.5"/>
@@ -164,6 +177,7 @@ footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); }
           <text class="val" x="240" y="236" text-anchor="middle" style="fill:var(--accent)">2.12</text>
         </svg>
       </div>
+      <p class="small muted m-only">At 10%: greedy 2.12. At 30%: greedy 1.28, random 2.32, cheapest tasks 3.98. No probe is 11.11 at every budget.</p>
       <p class="small muted">Mean absolute error over the nine held-out models, in percentage points of the true step rate. Budget is a share of the full benchmark's cost in recorded agent time. Absolute errors are biased upward by the resampling, so the paired differences below are the fair comparison.</p>
     </div>
   </div></section>
@@ -173,7 +187,7 @@ footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); }
     <div class="figure">
       <div class="key"><span><i style="background:var(--accent)"></i>interval excludes zero</span><span><i style="background:var(--none)"></i>interval includes zero</span><span class="muted">Left of zero favours greedy</span></div>
       <div class="svg-wrap">
-        <svg viewBox="0 0 790 400" role="img" aria-label="Paired step-rate error differences, greedy minus baseline. Against no probe every interval is below zero. Against random every interval crosses zero. Against cheapest tasks intervals cross zero at 5 and 10 percent and are below zero at 20 and 30 percent.">
+        <svg class="forest" viewBox="0 0 790 400" role="img" aria-label="Paired step-rate error differences, greedy minus baseline. Against no probe every interval is below zero. Against random every interval crosses zero. Against cheapest tasks intervals cross zero at 5 and 10 percent and are below zero at 20 and 30 percent.">
           <g stroke="var(--grid)" stroke-width="1"><line x1="170" y1="20" x2="170" y2="360"/><line x1="258" y1="20" x2="258" y2="360"/><line x1="346" y1="20" x2="346" y2="360"/><line x1="434" y1="20" x2="434" y2="360"/><line x1="610" y1="20" x2="610" y2="360"/></g>
           <line x1="522" y1="20" x2="522" y2="360" stroke="var(--ink)" stroke-width="1.5"/>
           <g class="tick" text-anchor="middle"><text x="170" y="380">−12</text><text x="258" y="380">−9</text><text x="346" y="380">−6</text><text x="434" y="380">−3</text><text x="522" y="380">0</text><text x="610" y="380">+3</text></g>
@@ -202,6 +216,24 @@ footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); }
           </g>
         </svg>
       </div>
+      <div class="table-wrap m-only"><table>
+        <tr><th>Budget</th><th class="r">Greedy minus baseline [95%]</th></tr>
+        <tr><th colspan="2" scope="colgroup">vs no probe</th></tr>
+        <tr><td>5%</td><td class="r ex">−7.14 [−9.34, −3.89]</td></tr>
+        <tr><td>10%</td><td class="r ex">−8.98 [−10.63, −5.88]</td></tr>
+        <tr><td>20%</td><td class="r ex">−9.72 [−11.20, −6.92]</td></tr>
+        <tr><td>30%</td><td class="r ex">−9.82 [−11.55, −7.51]</td></tr>
+        <tr><th colspan="2" scope="colgroup">vs random</th></tr>
+        <tr><td>5%</td><td class="r">−2.26 [−5.83, 2.05]</td></tr>
+        <tr><td>10%</td><td class="r">−2.29 [−4.23, 1.27]</td></tr>
+        <tr><td>20%</td><td class="r">−1.63 [−2.73, 1.08]</td></tr>
+        <tr><td>30%</td><td class="r">−1.03 [−2.11, 1.01]</td></tr>
+        <tr><th colspan="2" scope="colgroup">vs cheapest tasks</th></tr>
+        <tr><td>5%</td><td class="r">−0.66 [−5.94, 2.06]</td></tr>
+        <tr><td>10%</td><td class="r">−2.25 [−5.57, 0.63]</td></tr>
+        <tr><td>20%</td><td class="r ex">−3.92 [−5.39, −0.48]</td></tr>
+        <tr><td>30%</td><td class="r ex">−2.70 [−4.32, −0.18]</td></tr>
+      </table></div>
       <p class="small muted">Step-rate error difference in points, greedy minus the baseline, with 95% percentile intervals over task-bootstrap replicates. <code>uniform</code> is left out because it cannot afford any depth at 5% and 10% and spends nothing there.</p>
     </div>
   </div></section>
