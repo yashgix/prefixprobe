@@ -3,6 +3,9 @@
 If a lab can afford only a slice of [Multi-step SWE](https://github.com/Klavis-AI/Multi-step-SWE) for a new model,
 which slices should it run — and how well do those runs predict the model's full step rate and solve rate?
 
+**Write-up: [yashgix.github.io/prefixprobe](https://yashgix.github.io/prefixprobe/)** (the same page is in
+[`docs/index.html`](docs/index.html))
+
 Multi-step SWE chains **5–15 dependent engineering requests** on one codebase, so the natural unit is not the task but
 the *prefix*: step k of a task can only run after steps 1..k-1, and a model's own earlier work is what step k is
 scored against. Probing the first k steps of a task therefore costs the sum of those k steps' costs and yields a

@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>prefixprobe</title>
+<meta name="description" content="Which slices of Multi-step SWE to run for a new model on a small budget, and how well they predict its full step and solve rates.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fragment+Mono&display=swap">
+<style>
+/* Layout: 760px reading column, charts widen to 980px. Burnt orange is the accent and the greedy planner. Grey means
+   an interval that includes zero. One light theme on purpose. */
+:root {
+  color-scheme: light;
+  --paper: #ffffff;
+  --band: #f7f5f2;
+  --ink: #1d1a17;
+  --muted: #5f5852;
+  --line: #e9e4de;
+  --grid: #efebe6;
+  --accent: #c2410c;
+  --accent-soft: #fbeee6;
+  --random: #3f5a7a;
+  --cheap: #0f766e;
+  --none: #a39b93;
+  --code: #f2efeb;
+  --sans: "Instrument Sans", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "Fragment Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --s0: 0.8125rem; --s1: 1.0625rem; --s2: 1.25rem; --s3: 1.65rem; --s4: clamp(2.2rem, 5.5vw, 3.2rem);
+  --radius: 12px;
+}
+body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: var(--s1); line-height: 1.65; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.col { max-width: 760px; margin-inline: auto; }
+.wide { max-width: 980px; margin-inline: auto; }
+a { color: var(--accent); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { text-wrap: balance; line-height: 1.2; margin: 0; }
+h2 { font-size: var(--s3); font-weight: 600; letter-spacing: -0.015em; }
+h3 { font-size: var(--s1); font-weight: 600; }
+p, ul, ol { margin: 0; }
+ul, ol { padding-left: 1.25rem; display: flex; flex-direction: column; gap: 0.4rem; }
+code { font-family: var(--mono); font-size: 0.86em; background: var(--code); padding: 0.08em 0.35em; border-radius: 4px; overflow-wrap: anywhere; }
+.muted { color: var(--muted); }
+.small { font-size: var(--s0); }
+.num { font-variant-numeric: tabular-nums; }
+.eyebrow { font-family: var(--mono); font-size: var(--s0); color: var(--accent); letter-spacing: 0.04em; text-transform: uppercase; }
+.stack { display: flex; flex-direction: column; gap: 1.1rem; }
+section { padding-block: 2.75rem; }
+section + section { border-top: 1px solid var(--line); }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: rgba(255,255,255,0.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+.bar-in { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 0.6rem; }
+.brand { font-family: var(--mono); }
+.tabs { display: flex; gap: 0.25rem; }
+.bar-in .tabs { margin-left: auto; }
+.gh { font-size: var(--s0); font-weight: 600; text-decoration: none; white-space: nowrap; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 0.3rem 0.8rem; }
+.gh:hover { background: var(--accent-soft); }
+.tabs button { font: inherit; font-size: var(--s0); font-weight: 500; border: 0; background: transparent; color: var(--muted); padding: 0.4rem 0.8rem; border-radius: 999px; cursor: pointer; }
+.tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--accent); }
+
+header { padding-block: 3.5rem 2.25rem; background: linear-gradient(180deg, var(--band), var(--paper)); }
+h1 { font-size: var(--s4); font-weight: 700; letter-spacing: -0.03em; }
+.lede { font-size: var(--s2); color: var(--muted); max-width: 60ch; line-height: 1.55; }
+.meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; font-size: var(--s0); color: var(--muted); }
+.meta b { color: var(--ink); font-weight: 600; }
+
+.verdict { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
+.v { border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.v .tag { align-self: flex-start; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.15rem 0.55rem; border-radius: 999px; }
+.tag.yes { background: var(--accent-soft); color: var(--accent); }
+.tag.partly { background: #e6f2f0; color: var(--cheap); }
+.tag.no { background: var(--code); color: var(--muted); }
+.v .what { font-weight: 600; line-height: 1.35; }
+.v .detail { font-size: var(--s0); color: var(--muted); }
+
+.figure { border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.svg-wrap { overflow-x: auto; }
+.svg-wrap svg { display: block; width: 100%; min-width: 520px; height: auto; }
+svg text { font-family: var(--sans); fill: var(--muted); }
+svg .lbl { font-size: 13px; font-weight: 600; }
+svg .tick { font-size: 12px; }
+svg .val { font-family: var(--mono); font-size: 11.5px; }
+.key { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: var(--s0); color: var(--muted); }
+.key span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.key i { width: 14px; height: 3px; display: inline-block; border-radius: 2px; }
+
+pre { margin: 0; background: var(--band); border: 1px solid var(--line); border-radius: 8px; padding: 0.9rem 1rem; overflow-x: auto; font-family: var(--mono); font-size: 0.82rem; line-height: 1.6; }
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+th, td { text-align: left; padding: 0.55rem 0.8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: var(--s0); color: var(--muted); font-weight: 500; background: var(--band); }
+td.r, th.r { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+tr.hl td { background: var(--accent-soft); }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; font: inherit; font-weight: 500; padding: 0.55rem 1rem; border-radius: 999px; border: 1px solid var(--accent); color: var(--accent); background: var(--paper); cursor: pointer; }
+footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); }
+
+@media (max-width: 760px) {
+  .verdict { grid-template-columns: minmax(0, 1fr); }
+  .brand { display: none; }
+  .tabs button { padding: 0.4rem 0.55rem; }
+  .gh { padding: 0.3rem 0.6rem; }
+  .figure { padding: 0.9rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="bar wrap"><div class="wide bar-in">
+  <span class="brand">prefixprobe</span>
+  <div class="tabs" role="tablist" aria-label="View">
+    <button role="tab" id="tab-overview" aria-controls="overview" aria-selected="true" data-view="overview">Overview</button>
+    <button role="tab" id="tab-details" aria-controls="details" aria-selected="false" data-view="details">Technical details</button>
+  </div>
+  <a class="gh" href="https://github.com/yashgix/prefixprobe" target="_blank" rel="noopener">GitHub ↗</a>
+</div></div>
+
+<main id="overview" role="tabpanel" aria-labelledby="tab-overview">
+  <header class="wrap"><div class="col stack">
+    <p class="eyebrow">Multi-step SWE · budgeted evaluation</p>
+    <h1>prefixprobe</h1>
+    <p class="lede">If a lab can afford only a slice of Multi-step SWE for a new model, which slices should it run, and how well do they predict the model's full step rate and solve rate? Each of the benchmark's nine published models is held out in turn and predicted from a budgeted set of task prefixes.</p>
+    <div class="meta"><span><b>9</b> models held out in turn</span><span><b>69</b> tasks, <b>574</b> steps</span><span>budgets <b>5 to 30%</b> of full cost</span><span><a href="https://github.com/yashgix/prefixprobe">github.com/yashgix/prefixprobe</a></span></div>
+  </div></header>
+
+  <section class="wrap" aria-labelledby="sum-h"><div class="wide stack">
+    <p class="eyebrow">The result</p>
+    <h2 id="sum-h">A better step-rate estimate than no probe. Not shown to beat random selection.</h2>
+    <div class="verdict">
+      <div class="v"><span class="tag yes">Clear</span><span class="what">Beats no probe on step rate</span><span class="detail">The paired interval excludes zero at every budget. At 10% the error drops from 11.11 to 2.12 points.</span></div>
+      <div class="v"><span class="tag partly">Larger budgets only</span><span class="what">Beats cheap whole tasks on step rate</span><span class="detail">The interval excludes zero at 20% and 30%, and includes it at 5% and 10%.</span></div>
+      <div class="v"><span class="tag no">Not shown</span><span class="what">Beats random prefixes, or improves solve rate</span><span class="detail">Every interval against random includes zero. Greedy's solve-rate error is higher than cheap whole tasks' at every budget.</span></div>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="mae-h"><div class="wide stack">
+    <h2 id="mae-h">Step-rate error by budget</h2>
+    <div class="figure">
+      <div class="key">
+        <span><i style="background:var(--accent)"></i>greedy (dependency-aware)</span>
+        <span><i style="background:var(--random)"></i>random prefixes</span>
+        <span><i style="background:var(--cheap)"></i>cheapest whole tasks</span>
+        <span><i style="background:var(--none)"></i>no probe</span>
+      </div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 720 300" role="img" aria-label="Mean absolute step-rate error in points by budget. Greedy 3.96, 2.12, 1.39, 1.28. Random 6.23, 4.41, 3.02, 2.32. Cheapest tasks 4.62, 4.37, 5.31, 3.98. No probe 11.11 at every budget.">
+          <g stroke="var(--grid)" stroke-width="1">
+            <line x1="60" y1="260" x2="600" y2="260"/><line x1="60" y1="200" x2="600" y2="200"/><line x1="60" y1="140" x2="600" y2="140"/><line x1="60" y1="80" x2="600" y2="80"/><line x1="60" y1="20" x2="600" y2="20"/>
+          </g>
+          <g class="tick" text-anchor="end"><text x="50" y="264">0</text><text x="50" y="204">3</text><text x="50" y="144">6</text><text x="50" y="84">9</text><text x="50" y="24">12</text></g>
+          <g class="tick" text-anchor="middle"><text x="150" y="282">5%</text><text x="240" y="282">10%</text><text x="420" y="282">20%</text><text x="600" y="282">30%</text></g>
+          <text class="tick" x="14" y="140" transform="rotate(-90 14 140)" text-anchor="middle">error, points</text>
+          <polyline points="150,37.8 600,37.8" fill="none" stroke="var(--none)" stroke-width="2" stroke-dasharray="5 5"/>
+          <polyline points="150,167.6 240,172.6 420,153.8 600,180.4" fill="none" stroke="var(--cheap)" stroke-width="2.5"/>
+          <polyline points="150,135.4 240,171.8 420,199.6 600,213.6" fill="none" stroke="var(--random)" stroke-width="2.5"/>
+          <polyline points="150,180.8 240,217.6 420,232.2 600,234.4" fill="none" stroke="var(--accent)" stroke-width="3"/>
+          <g fill="var(--cheap)"><circle cx="150" cy="167.6" r="4"/><circle cx="240" cy="172.6" r="4"/><circle cx="420" cy="153.8" r="4"/><circle cx="600" cy="180.4" r="4"/></g>
+          <g fill="var(--random)"><circle cx="150" cy="135.4" r="4"/><circle cx="240" cy="171.8" r="4"/><circle cx="420" cy="199.6" r="4"/><circle cx="600" cy="213.6" r="4"/></g>
+          <g fill="var(--accent)"><circle cx="150" cy="180.8" r="4.5"/><circle cx="240" cy="217.6" r="4.5"/><circle cx="420" cy="232.2" r="4.5"/><circle cx="600" cy="234.4" r="4.5"/></g>
+          <g class="val"><text x="612" y="41.8">none 11.11</text><text x="612" y="184.4" style="fill:var(--cheap)">cheapest 3.98</text><text x="612" y="214.6" style="fill:var(--random)">random 2.32</text><text x="612" y="240.4" style="fill:var(--accent)">greedy 1.28</text></g>
+          <text class="val" x="240" y="236" text-anchor="middle" style="fill:var(--accent)">2.12</text>
+        </svg>
+      </div>
+      <p class="small muted">Mean absolute error over the nine held-out models, in percentage points of the true step rate. Budget is a share of the full benchmark's cost in recorded agent time. Absolute errors are biased upward by the resampling, so the paired differences below are the fair comparison.</p>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="pair-h"><div class="wide stack">
+    <h2 id="pair-h">Greedy minus each baseline, with 95% intervals</h2>
+    <div class="figure">
+      <div class="key"><span><i style="background:var(--accent)"></i>interval excludes zero</span><span><i style="background:var(--none)"></i>interval includes zero</span><span class="muted">Left of zero favours greedy</span></div>
+      <div class="svg-wrap">
+        <svg viewBox="0 0 790 400" role="img" aria-label="Paired step-rate error differences, greedy minus baseline. Against no probe every interval is below zero. Against random every interval crosses zero. Against cheapest tasks intervals cross zero at 5 and 10 percent and are below zero at 20 and 30 percent.">
+          <g stroke="var(--grid)" stroke-width="1"><line x1="170" y1="20" x2="170" y2="360"/><line x1="258" y1="20" x2="258" y2="360"/><line x1="346" y1="20" x2="346" y2="360"/><line x1="434" y1="20" x2="434" y2="360"/><line x1="610" y1="20" x2="610" y2="360"/></g>
+          <line x1="522" y1="20" x2="522" y2="360" stroke="var(--ink)" stroke-width="1.5"/>
+          <g class="tick" text-anchor="middle"><text x="170" y="380">−12</text><text x="258" y="380">−9</text><text x="346" y="380">−6</text><text x="434" y="380">−3</text><text x="522" y="380">0</text><text x="610" y="380">+3</text></g>
+          <text class="lbl" x="0" y="34" style="fill:var(--ink)">vs no probe</text>
+          <text class="lbl" x="0" y="150" style="fill:var(--ink)">vs random</text>
+          <text class="lbl" x="0" y="266" style="fill:var(--ink)">vs cheapest tasks</text>
+          <g class="tick" text-anchor="end">
+            <text x="150" y="54">5%</text><text x="150" y="76">10%</text><text x="150" y="98">20%</text><text x="150" y="120">30%</text>
+            <text x="150" y="170">5%</text><text x="150" y="192">10%</text><text x="150" y="214">20%</text><text x="150" y="236">30%</text>
+            <text x="150" y="286">5%</text><text x="150" y="308">10%</text><text x="150" y="330">20%</text><text x="150" y="352">30%</text>
+          </g>
+          <g stroke="var(--accent)" stroke-width="3" stroke-linecap="round">
+            <line x1="248.0" y1="50" x2="407.9" y2="50"/><line x1="210.2" y1="72" x2="349.5" y2="72"/><line x1="193.5" y1="94" x2="319.0" y2="94"/><line x1="183.2" y1="116" x2="301.7" y2="116"/>
+            <line x1="363.9" y1="326" x2="507.9" y2="326"/><line x1="395.3" y1="348" x2="516.7" y2="348"/>
+          </g>
+          <g stroke="var(--none)" stroke-width="3" stroke-linecap="round">
+            <line x1="351.0" y1="166" x2="582.1" y2="166"/><line x1="397.9" y1="188" x2="559.3" y2="188"/><line x1="441.9" y1="210" x2="553.7" y2="210"/><line x1="460.1" y1="232" x2="551.6" y2="232"/>
+            <line x1="347.8" y1="282" x2="582.4" y2="282"/><line x1="358.6" y1="304" x2="540.5" y2="304"/>
+          </g>
+          <g fill="var(--accent)"><circle cx="312.6" cy="50" r="5"/><circle cx="258.6" cy="72" r="5"/><circle cx="236.9" cy="94" r="5"/><circle cx="233.9" cy="116" r="5"/><circle cx="407.0" cy="326" r="5"/><circle cx="442.8" cy="348" r="5"/></g>
+          <g fill="var(--muted)"><circle cx="455.7" cy="166" r="5"/><circle cx="454.8" cy="188" r="5"/><circle cx="474.2" cy="210" r="5"/><circle cx="491.8" cy="232" r="5"/><circle cx="502.6" cy="282" r="5"/><circle cx="456.0" cy="304" r="5"/></g>
+          <g class="val">
+            <text x="626" y="54">−7.14 [−9.34, −3.89]</text><text x="626" y="76">−8.98 [−10.63, −5.88]</text><text x="626" y="98">−9.72 [−11.20, −6.92]</text><text x="626" y="120">−9.82 [−11.55, −7.51]</text>
+            <text x="626" y="170">−2.26 [−5.83, 2.05]</text><text x="626" y="192">−2.29 [−4.23, 1.27]</text><text x="626" y="214">−1.63 [−2.73, 1.08]</text><text x="626" y="236">−1.03 [−2.11, 1.01]</text>
+            <text x="626" y="286">−0.66 [−5.94, 2.06]</text><text x="626" y="308">−2.25 [−5.57, 0.63]</text><text x="626" y="330">−3.92 [−5.39, −0.48]</text><text x="626" y="352">−2.70 [−4.32, −0.18]</text>
+          </g>
+        </svg>
+      </div>
+      <p class="small muted">Step-rate error difference in points, greedy minus the baseline, with 95% percentile intervals over task-bootstrap replicates. <code>uniform</code> is left out because it cannot afford any depth at 5% and 10% and spends nothing there.</p>
+    </div>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="idea-h"><div class="col stack">
+    <p class="eyebrow">The idea</p>
+    <h2 id="idea-h">Pay for prefixes, because steps depend on each other</h2>
+    <p>Multi-step SWE chains 5 to 15 dependent engineering requests on one codebase. Step k can only run after steps 1 to k−1, so the natural unit to buy is a prefix of a task. The planner spends a fixed budget on prefixes, best gain per unit of cost first. An estimator then fits two ability offsets for the new model and extrapolates to the steps it did not run.</p>
+    <p>One example: the strongest model's true step rate is 56.8%. With no probe the estimate is 23.83 points low. With the greedy probe at 10% it is 3.49 points low.</p>
+    <p class="small muted">This is an independent analysis of Klavis AI's published results. It is not affiliated with Klavis AI and says nothing about their own process.</p>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="lim-h"><div class="col stack">
+    <p class="eyebrow">Limits</p>
+    <h2 id="lim-h">What this does not show</h2>
+    <ul>
+      <li>Nine models means nine held-out folds. The bootstrap resamples tasks, not models, and a future model generation may rank steps differently.</li>
+      <li>The cost unit is recorded agent time from the other models, not dollars. A new model's own speed is unknown.</li>
+      <li>The planner is fixed in advance, not adaptive, and its design was checked on the same nine models it is evaluated on.</li>
+      <li>The estimator is deliberately simple. It is a baseline, not a claim about the best possible method.</li>
+    </ul>
+    <p><button class="btn" type="button" data-view="details">Technical details →</button></p>
+  </div></section>
+</main>
+
+<main id="details" role="tabpanel" aria-labelledby="tab-details" hidden>
+  <header class="wrap"><div class="col stack">
+    <p class="eyebrow">Technical details</p>
+    <h1 style="font-size:clamp(1.8rem,4.4vw,2.5rem)">Method, results and data terms</h1>
+  </div></header>
+
+  <section class="wrap" aria-labelledby="est-h"><div class="col stack">
+    <h2 id="est-h">The estimator</h2>
+    <ul>
+      <li>A step's difficulty is the log-odds that the other models pass it.</li>
+      <li>The new model gets two separately fitted ability offsets: one for passing a step, and one for passing it after a clean prefix, which drives the solve rate. Each is fitted by MAP under a normal prior.</li>
+      <li>For unprobed steps only their run counts are used. Run counts are fixed before probing, so they weight the extrapolation, and no unprobed outcome enters it.</li>
+    </ul>
+    <p class="small muted">This is textbook item-response theory, not a new statistical method. What is specific here is the planning problem: items arrive in dependent chains, each has its own cost, and the bill for a chain is the sum of its prefix.</p>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="t10-h"><div class="wide stack">
+    <h2 id="t10-h">All strategies at the 10% budget</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Strategy</th><th class="r">Step-rate error</th><th class="r">Solve-rate error</th><th class="r">Steps probed</th><th class="r">Tasks probed</th></tr></thead>
+      <tbody>
+        <tr><td><code>none</code></td><td class="r">11.11 [9.47, 13.29]</td><td class="r">5.18 [3.47, 7.43]</td><td class="r">0.0</td><td class="r">0.0</td></tr>
+        <tr><td><code>random</code></td><td class="r">4.41 [2.34, 6.83]</td><td class="r">3.08 [1.53, 5.35]</td><td class="r">57.9</td><td class="r">7.9</td></tr>
+        <tr><td><code>uniform</code></td><td class="r">11.11 [9.47, 13.29]</td><td class="r">5.18 [3.47, 7.43]</td><td class="r">0.0</td><td class="r">0.0</td></tr>
+        <tr><td><code>cheapest_tasks</code></td><td class="r">4.37 [2.64, 8.59]</td><td class="r">0.96 [0.99, 4.16]</td><td class="r">75.6</td><td class="r">13.3</td></tr>
+        <tr class="hl"><td><code>greedy</code></td><td class="r">2.12 [1.80, 4.57]</td><td class="r">2.08 [1.27, 4.59]</td><td class="r">60.7</td><td class="r">48.7</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">Mean absolute error in points with 95% intervals. <code>cheapest_tasks</code>' solve-rate point error sits below its own interval because absolute errors are biased upward by the resampling. All four budgets, the paired tables and per-model errors are in the README.</p>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="solve-h"><div class="col stack">
+    <h2 id="solve-h">Solve rate</h2>
+    <p>There is no solve-rate gain over the simple baselines. Greedy's solve-rate error is higher than <code>cheapest_tasks</code>' at every budget, and its difference from random includes zero at every budget. Its only solve-rate intervals that exclude zero are against <code>none</code> at 10%, 20% and 30%, and against <code>uniform</code> at 10%, where <code>uniform</code> spends nothing.</p>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="data-h"><div class="col stack">
+    <h2 id="data-h">Data and cost</h2>
+    <p>The benchmark's published results cover 69 tasks, 574 steps and nine models with four runs per task. Runs continue after a failed step, so a run's first k scores are exactly what a probe of the first k steps would produce. The cost of a prefix is the mean recorded agent time per run of each step, summed over the prefix.</p>
+    <p><b>Data terms.</b> The site states no license for this data, so the repository does not include it. It holds the code, a fetch tool, a sha256 manifest and the derived aggregate results only. Anyone reproducing the experiment fetches the data themselves, and <code>.gitignore</code> keeps it out of commits. CI never downloads it, and the three data tests skip there.</p>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="run-h"><div class="col stack">
+    <h2 id="run-h">Reproduce</h2>
+<pre>python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install numpy==2.5.4 scipy==1.18.1 ruff
+python tools/fetch_data.py     # fetches and checks the published results
+make test                      # 80 tests
+make lint
+python experiment.py --out results/metrics.json   # about 7 minutes
+python demo.py --readme README.md --out README.md</pre>
+    <p class="small muted">Two runs of the same command produce byte-identical results, so a rerun is checkable with <code>git diff</code>.</p>
+  </div></section>
+
+  <section class="wrap" aria-labelledby="src-h"><div class="col stack">
+    <h2 id="src-h">License and how it was built</h2>
+    <p>The code is MIT. The Multi-step SWE results data is not included and is not covered by this license.</p>
+    <p class="small muted">I directed the project. AI coding agents wrote most of the code and tests, and automated model reviews checked them. Those reviews are not an external audit. The evidence is the code, the tests and the generated results.</p>
+    <p><button class="btn" type="button" data-view="overview">← Overview</button></p>
+  </div></section>
+</main>
+
+<footer class="wrap"><div class="wide small muted">prefixprobe · Yash Gupta · <a href="https://github.com/yashgix/prefixprobe">github.com/yashgix/prefixprobe</a></div></footer>
+
+<script>
+const views = ["overview", "details"];
+function show(v) {
+  if (!views.includes(v)) v = "overview";
+  for (const x of views) {
+    document.getElementById(x).hidden = x !== v;
+    document.getElementById("tab-" + x).setAttribute("aria-selected", String(x === v));
+  }
+}
+document.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => {
+  history.replaceState(null, "", "#" + b.dataset.view);
+  show(b.dataset.view);
+  window.scrollTo(0, 0);
+}));
+addEventListener("hashchange", () => show(location.hash.slice(1)));
+show(location.hash.slice(1));
+</script>
+</body>
+</html>
