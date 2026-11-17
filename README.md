@@ -251,12 +251,6 @@ docs/          design notes and a five-minute explanation
 results/       metrics.json from the committed run
 ```
 
-## How this was built
-
-Yash Gupta directed the project. AI coding agents (Claude Code and an agent build pipeline) wrote most of the code
-and tests, and automated model reviews checked them. Those reviews are not an external audit. The evidence is the
-code, the tests and the reproducible `results/metrics.json`.
-
 ## License
 
 MIT for this repository's code (`LICENSE`). The Multi-step SWE results data is not included and is not covered by

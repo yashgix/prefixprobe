@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>prefixprobe</title>
 <meta name="description" content="Which slices of Multi-step SWE to run for a new model on a small budget, and how well they predict its full step and solve rates.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fragment+Mono&display=swap">
 <style>
 /* Layout: 760px reading column, charts widen to 980px. Burnt orange is the accent and the greedy planner. Grey means
    an interval that includes zero. One light theme on purpose. */
@@ -30,7 +27,7 @@
   --s0: 0.8125rem; --s1: 1.0625rem; --s2: 1.25rem; --s3: 1.65rem; --s4: clamp(2.2rem, 5.5vw, 3.2rem);
   --radius: 12px;
 }
-body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: var(--s1); line-height: 1.65; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: var(--s1); line-height: 1.65; }
 .wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .col { max-width: 760px; margin-inline: auto; }
 .wide { max-width: 980px; margin-inline: auto; }
@@ -314,9 +311,8 @@ python demo.py --readme README.md --out README.md</pre>
   </div></section>
 
   <section class="wrap" aria-labelledby="src-h"><div class="col stack">
-    <h2 id="src-h">License and how it was built</h2>
+    <h2 id="src-h">License</h2>
     <p>The code is MIT. The Multi-step SWE results data is not included and is not covered by this license.</p>
-    <p class="small muted">I directed the project. AI coding agents wrote most of the code and tests, and automated model reviews checked them. Those reviews are not an external audit. The evidence is the code, the tests and the generated results.</p>
     <p><button class="btn" type="button" data-view="overview">← Overview</button></p>
   </div></section>
 </main>
