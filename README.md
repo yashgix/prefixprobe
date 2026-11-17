@@ -247,7 +247,7 @@ data/          MANIFEST.json; tools/fetch_data.py downloads the benchmark module
 tools/         fetch_data.py
 experiment.py  command line: writes results/metrics.json
 demo.py        one-line summary and README rendering
-docs/          design notes and a five-minute explanation
+docs/          design notes and the write-up page
 results/       metrics.json from the committed run
 ```
 
